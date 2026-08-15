@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
-export type QuickAddMode = 'task' | 'decision' | 'household' | 'guest';
+export type QuickAddMode = 'task' | 'decision' | 'household' | 'guest' | 'travel' | 'hotel' | 'route';
 
 interface UIContextValue {
   selectedTaskId: string | null;
@@ -19,6 +19,10 @@ interface UIContextValue {
   openGuestDetail: (guestId: string) => void;
   closeGuestDetail: () => void;
 
+  selectedTravelSegmentId: string | null;
+  openTravelDetail: (travelSegmentId: string) => void;
+  closeTravelDetail: () => void;
+
   quickAddOpen: boolean;
   quickAddMode: QuickAddMode;
   openQuickAdd: (mode?: QuickAddMode) => void;
@@ -36,6 +40,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null);
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | null>(null);
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
+  const [selectedTravelSegmentId, setSelectedTravelSegmentId] = useState<string | null>(null);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickAddMode, setQuickAddMode] = useState<QuickAddMode>('task');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -51,6 +56,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
   const openGuestDetail = useCallback((guestId: string) => setSelectedGuestId(guestId), []);
   const closeGuestDetail = useCallback(() => setSelectedGuestId(null), []);
+
+  const openTravelDetail = useCallback((travelSegmentId: string) => setSelectedTravelSegmentId(travelSegmentId), []);
+  const closeTravelDetail = useCallback(() => setSelectedTravelSegmentId(null), []);
 
   const openQuickAdd = useCallback((mode: QuickAddMode = 'task') => {
     setQuickAddMode(mode);
@@ -75,6 +83,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
       selectedGuestId,
       openGuestDetail,
       closeGuestDetail,
+      selectedTravelSegmentId,
+      openTravelDetail,
+      closeTravelDetail,
       quickAddOpen,
       quickAddMode,
       openQuickAdd,
@@ -96,6 +107,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
       selectedGuestId,
       openGuestDetail,
       closeGuestDetail,
+      selectedTravelSegmentId,
+      openTravelDetail,
+      closeTravelDetail,
       quickAddOpen,
       quickAddMode,
       openQuickAdd,

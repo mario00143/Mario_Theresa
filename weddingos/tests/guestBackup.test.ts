@@ -13,10 +13,9 @@ describe('version 2 backup export', () => {
     resetToDemoData();
   });
 
-  it('exports version 2 with households and guests included', () => {
+  it('exports the current backup version with households and guests included', () => {
     const backup = exportBackup();
-    expect(backup.version).toBe(2);
-    expect(BACKUP_VERSION).toBe(2);
+    expect(backup.version).toBe(BACKUP_VERSION);
     expect(backup.households.length).toBeGreaterThan(0);
     expect(backup.guests.length).toBeGreaterThan(0);
   });

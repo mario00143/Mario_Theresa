@@ -5,6 +5,10 @@ import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   backupFilename,
+  driverDirectoryCsvFilename,
+  driverDirectoryToCSV,
+  dropManifestCsvFilename,
+  dropManifestToCSV,
   exportBackup,
   guestsCsvFilename,
   guestsToCSV,
@@ -12,16 +16,32 @@ import {
   householdsToCSV,
   importBackup,
   normalizeBackup,
+  pickupManifestCsvFilename,
+  pickupManifestToCSV,
+  roomAssignmentsCsvFilename,
+  roomAssignmentsToCSV,
   rsvpReportCsvFilename,
   rsvpReportToCSV,
   tasksCsvFilename,
   tasksToCSV,
+  travelCsvFilename,
+  travelToCSV,
   validateBackup,
+  vehicleManifestCsvFilename,
+  vehicleManifestToCSV,
 } from '@/data/repositories/backupRepository';
 import { resetToDemoData } from '@/data/stores';
 import { useTasks } from '@/hooks/useTasks';
 import { useHouseholds } from '@/hooks/useHouseholds';
 import { useGuests } from '@/hooks/useGuests';
+import { useTravel } from '@/hooks/useTravel';
+import { useHotels } from '@/hooks/useHotels';
+import { useRoomTypes, useRooms } from '@/hooks/useRooms';
+import { useRoomAssignments } from '@/hooks/useRoomAssignments';
+import { useVehicles } from '@/hooks/useVehicles';
+import { useDrivers } from '@/hooks/useDrivers';
+import { useTransportRoutes } from '@/hooks/useTransportRoutes';
+import { useTransportAssignments } from '@/hooks/useTransportAssignments';
 import { downloadTextFile } from '@/utils/download';
 import type { WeddingOSBackup } from '@/types';
 
@@ -29,6 +49,15 @@ export function DataManagement() {
   const { tasks } = useTasks();
   const { households } = useHouseholds();
   const { guests } = useGuests();
+  const { travelSegments } = useTravel();
+  const { hotels } = useHotels();
+  const { roomTypes } = useRoomTypes();
+  const { rooms } = useRooms();
+  const { roomAssignments } = useRoomAssignments();
+  const { vehicles } = useVehicles();
+  const { drivers } = useDrivers();
+  const { routes } = useTransportRoutes();
+  const { transportAssignments } = useTransportAssignments();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingImport, setPendingImport] = useState<WeddingOSBackup | null>(null);
   const [importErrors, setImportErrors] = useState<string[]>([]);
@@ -59,6 +88,36 @@ export function DataManagement() {
   const handleExportRsvpReportCSV = () => {
     downloadTextFile(rsvpReportCsvFilename(), rsvpReportToCSV(guests, households), 'text/csv');
     setStatus('RSVP report exported as CSV.');
+  };
+
+  const handleExportTravelCSV = () => {
+    downloadTextFile(travelCsvFilename(), travelToCSV(travelSegments, guests, households), 'text/csv');
+    setStatus('Travel exported as CSV.');
+  };
+
+  const handleExportRoomAssignmentsCSV = () => {
+    downloadTextFile(roomAssignmentsCsvFilename(), roomAssignmentsToCSV(roomAssignments, guests, rooms, roomTypes, hotels), 'text/csv');
+    setStatus('Room assignments exported as CSV.');
+  };
+
+  const handleExportPickupManifestCSV = () => {
+    downloadTextFile(pickupManifestCsvFilename(), pickupManifestToCSV(transportAssignments, routes, guests, vehicles, drivers), 'text/csv');
+    setStatus('Pickup manifest exported as CSV.');
+  };
+
+  const handleExportDropManifestCSV = () => {
+    downloadTextFile(dropManifestCsvFilename(), dropManifestToCSV(transportAssignments, routes, guests, vehicles, drivers), 'text/csv');
+    setStatus('Drop manifest exported as CSV.');
+  };
+
+  const handleExportVehicleManifestCSV = () => {
+    downloadTextFile(vehicleManifestCsvFilename(), vehicleManifestToCSV(vehicles, routes, transportAssignments), 'text/csv');
+    setStatus('Vehicle manifest exported as CSV.');
+  };
+
+  const handleExportDriverDirectoryCSV = () => {
+    downloadTextFile(driverDirectoryCsvFilename(), driverDirectoryToCSV(drivers, vehicles, routes), 'text/csv');
+    setStatus('Driver directory exported as CSV.');
   };
 
   const handleFileSelected = async (file: File) => {
@@ -117,8 +176,8 @@ export function DataManagement() {
         <div>
           <p className="text-sm font-medium text-ink">Backup</p>
           <p className="text-xs text-ink-faint mt-0.5 mb-2.5">
-            Export everything — settings, tasks, decisions, owner roles, households, and guests — as a single JSON file.
-            Version 1 (Phase 1) backups can still be imported; guest data is initialized empty for those files.
+            Export everything — settings, tasks, decisions, owner roles, households, guests, and travel/accommodation/transport logistics — as a single JSON file.
+            Version 1 (Phase 1) and version 2 (Phase 2) backups can still be imported; collections introduced after a file's version are initialized empty for those files.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportJSON}>
@@ -147,7 +206,7 @@ export function DataManagement() {
 
         <div>
           <p className="text-sm font-medium text-ink">Export CSV</p>
-          <p className="text-xs text-ink-faint mt-0.5 mb-2.5">Spreadsheet-friendly exports for tasks, households, guests, and the per-event RSVP report.</p>
+          <p className="text-xs text-ink-faint mt-0.5 mb-2.5">Spreadsheet-friendly exports for tasks, households, guests, RSVP, and travel/accommodation/transport logistics.</p>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportTasksCSV}>
               Export tasks (CSV)
@@ -160,6 +219,24 @@ export function DataManagement() {
             </Button>
             <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportRsvpReportCSV}>
               Export RSVP report (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportTravelCSV}>
+              Export travel (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportRoomAssignmentsCSV}>
+              Export room assignments (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportPickupManifestCSV}>
+              Export pickup manifest (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportDropManifestCSV}>
+              Export drop manifest (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportVehicleManifestCSV}>
+              Export vehicle manifest (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportDriverDirectoryCSV}>
+              Export driver directory (CSV)
             </Button>
           </div>
         </div>

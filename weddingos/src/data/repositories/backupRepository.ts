@@ -1,4 +1,22 @@
-import type { AppSettings, Decision, Guest, GuestEvent, Household, Owner, Task, WeddingOSBackup } from '@/types';
+import type {
+  AppSettings,
+  Decision,
+  Driver,
+  Guest,
+  GuestEvent,
+  Hotel,
+  Household,
+  Owner,
+  Room,
+  RoomAssignment,
+  RoomType,
+  Task,
+  TransportAssignment,
+  TransportRoute,
+  TravelSegment,
+  Vehicle,
+  WeddingOSBackup,
+} from '@/types';
 import {
   AGE_CATEGORIES,
   BACKUP_VERSION,
@@ -9,9 +27,35 @@ import {
   HOUSEHOLD_SIDES,
   INVITATION_STATUSES,
   PRIORITIES,
+  ROOM_ASSIGNMENT_STATUSES,
+  ROOM_STATUSES,
+  ROUTE_STATUSES,
+  ROUTE_TYPES,
   TASK_STATUSES,
+  TRANSPORT_ASSIGNMENT_STATUSES,
+  TRAVEL_BOOKING_STATUSES,
+  TRAVEL_DIRECTIONS,
+  TRAVEL_MODES,
+  VEHICLE_STATUSES,
+  VEHICLE_TYPES,
 } from '@/types';
-import { decisionsStore, guestsStore, householdsStore, ownersStore, settingsStore, tasksStore } from '../stores';
+import {
+  decisionsStore,
+  driversStore,
+  guestsStore,
+  hotelsStore,
+  householdsStore,
+  ownersStore,
+  roomAssignmentsStore,
+  roomTypesStore,
+  roomsStore,
+  settingsStore,
+  tasksStore,
+  transportAssignmentsStore,
+  transportRoutesStore,
+  travelSegmentsStore,
+  vehiclesStore,
+} from '../stores';
 
 export function exportBackup(): WeddingOSBackup {
   return {
@@ -23,6 +67,15 @@ export function exportBackup(): WeddingOSBackup {
     owners: ownersStore.get(),
     households: householdsStore.get(),
     guests: guestsStore.get(),
+    travelSegments: travelSegmentsStore.get(),
+    hotels: hotelsStore.get(),
+    roomTypes: roomTypesStore.get(),
+    rooms: roomsStore.get(),
+    roomAssignments: roomAssignmentsStore.get(),
+    vehicles: vehiclesStore.get(),
+    drivers: driversStore.get(),
+    transportRoutes: transportRoutesStore.get(),
+    transportAssignments: transportAssignmentsStore.get(),
   };
 }
 
@@ -86,11 +139,83 @@ function isValidGuest(value: unknown): value is Guest {
   return true;
 }
 
+function isValidTravelSegment(value: unknown): value is TravelSegment {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.guestId !== 'string' || typeof value.householdId !== 'string') return false;
+  if (!EVENTS.includes(value.event as (typeof EVENTS)[number])) return false;
+  if (!TRAVEL_DIRECTIONS.includes(value.direction as (typeof TRAVEL_DIRECTIONS)[number])) return false;
+  if (!TRAVEL_MODES.includes(value.travelMode as (typeof TRAVEL_MODES)[number])) return false;
+  if (!TRAVEL_BOOKING_STATUSES.includes(value.bookingStatus as (typeof TRAVEL_BOOKING_STATUSES)[number])) return false;
+  if (typeof value.origin !== 'string' || typeof value.destination !== 'string') return false;
+  return true;
+}
+
+function isValidHotel(value: unknown): value is Hotel {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.name !== 'string' || typeof value.city !== 'string') return false;
+  return true;
+}
+
+function isValidRoomType(value: unknown): value is RoomType {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.hotelId !== 'string' || typeof value.name !== 'string') return false;
+  if (typeof value.capacity !== 'number') return false;
+  return true;
+}
+
+function isValidRoom(value: unknown): value is Room {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.hotelId !== 'string' || typeof value.roomTypeId !== 'string') return false;
+  if (typeof value.roomNumber !== 'string') return false;
+  if (!ROOM_STATUSES.includes(value.status as (typeof ROOM_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidRoomAssignment(value: unknown): value is RoomAssignment {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.roomId !== 'string' || typeof value.guestId !== 'string') return false;
+  if (typeof value.checkInDate !== 'string' || typeof value.checkOutDate !== 'string') return false;
+  if (!ROOM_ASSIGNMENT_STATUSES.includes(value.assignmentStatus as (typeof ROOM_ASSIGNMENT_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidVehicle(value: unknown): value is Vehicle {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.name !== 'string') return false;
+  if (!VEHICLE_TYPES.includes(value.vehicleType as (typeof VEHICLE_TYPES)[number])) return false;
+  if (!VEHICLE_STATUSES.includes(value.status as (typeof VEHICLE_STATUSES)[number])) return false;
+  if (typeof value.passengerCapacity !== 'number') return false;
+  return true;
+}
+
+function isValidDriver(value: unknown): value is Driver {
+  if (!isPlainObject(value)) return false;
+  return typeof value.id === 'string' && typeof value.name === 'string' && typeof value.phone === 'string';
+}
+
+function isValidTransportRoute(value: unknown): value is TransportRoute {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.name !== 'string') return false;
+  if (!EVENTS.includes(value.event as (typeof EVENTS)[number])) return false;
+  if (!ROUTE_TYPES.includes(value.routeType as (typeof ROUTE_TYPES)[number])) return false;
+  if (!ROUTE_STATUSES.includes(value.status as (typeof ROUTE_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidTransportAssignment(value: unknown): value is TransportAssignment {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.routeId !== 'string' || typeof value.guestId !== 'string') return false;
+  if (!TRANSPORT_ASSIGNMENT_STATUSES.includes(value.assignmentStatus as (typeof TRANSPORT_ASSIGNMENT_STATUSES)[number])) return false;
+  if (typeof value.seatCount !== 'number') return false;
+  return true;
+}
+
 /**
- * Accepts both version 1 (Phase 1: settings/tasks/decisions/owners only) and
- * version 2 (Phase 2: adds households/guests) backups. A version-1 file is
- * valid even without households/guests — those are optional there and are
- * initialized to empty arrays on import (see normalizeBackup).
+ * Accepts version 1 (Phase 1: settings/tasks/decisions/owners only),
+ * version 2 (Phase 2: adds households/guests), and version 3 (Phase 3: adds
+ * travel/accommodation/transport logistics) backups. Collections introduced
+ * after a file's version are optional in that file and are initialized to
+ * empty arrays on import (see normalizeBackup).
  */
 export function validateBackup(data: unknown): BackupValidationResult {
   const errors: string[] = [];
@@ -131,6 +256,24 @@ export function validateBackup(data: unknown): BackupValidationResult {
     }
   }
 
+  const isV3OrLater = version !== null && version >= 3;
+  const logisticsFields: Array<[key: string, validator: (v: unknown) => boolean, label: string]> = [
+    ['travelSegments', (v) => Array.isArray(v) && v.every(isValidTravelSegment), 'Travel segments'],
+    ['hotels', (v) => Array.isArray(v) && v.every(isValidHotel), 'Hotels'],
+    ['roomTypes', (v) => Array.isArray(v) && v.every(isValidRoomType), 'Room types'],
+    ['rooms', (v) => Array.isArray(v) && v.every(isValidRoom), 'Rooms'],
+    ['roomAssignments', (v) => Array.isArray(v) && v.every(isValidRoomAssignment), 'Room assignments'],
+    ['vehicles', (v) => Array.isArray(v) && v.every(isValidVehicle), 'Vehicles'],
+    ['drivers', (v) => Array.isArray(v) && v.every(isValidDriver), 'Drivers'],
+    ['transportRoutes', (v) => Array.isArray(v) && v.every(isValidTransportRoute), 'Transport routes'],
+    ['transportAssignments', (v) => Array.isArray(v) && v.every(isValidTransportAssignment), 'Transport assignments'],
+  ];
+  for (const [key, validator, label] of logisticsFields) {
+    if ((isV3OrLater || data[key] !== undefined) && !validator(data[key])) {
+      errors.push(`${label} section is missing or contains malformed entries.`);
+    }
+  }
+
   return { valid: errors.length === 0, errors };
 }
 
@@ -150,6 +293,15 @@ export function normalizeBackup(data: unknown): WeddingOSBackup {
     owners: raw.owners as Owner[],
     households: Array.isArray(raw.households) ? (raw.households as Household[]) : [],
     guests: Array.isArray(raw.guests) ? (raw.guests as Guest[]) : [],
+    travelSegments: Array.isArray(raw.travelSegments) ? (raw.travelSegments as TravelSegment[]) : [],
+    hotels: Array.isArray(raw.hotels) ? (raw.hotels as Hotel[]) : [],
+    roomTypes: Array.isArray(raw.roomTypes) ? (raw.roomTypes as RoomType[]) : [],
+    rooms: Array.isArray(raw.rooms) ? (raw.rooms as Room[]) : [],
+    roomAssignments: Array.isArray(raw.roomAssignments) ? (raw.roomAssignments as RoomAssignment[]) : [],
+    vehicles: Array.isArray(raw.vehicles) ? (raw.vehicles as Vehicle[]) : [],
+    drivers: Array.isArray(raw.drivers) ? (raw.drivers as Driver[]) : [],
+    transportRoutes: Array.isArray(raw.transportRoutes) ? (raw.transportRoutes as TransportRoute[]) : [],
+    transportAssignments: Array.isArray(raw.transportAssignments) ? (raw.transportAssignments as TransportAssignment[]) : [],
   };
 }
 
@@ -161,6 +313,15 @@ export function importBackup(backup: WeddingOSBackup): void {
   ownersStore.set(backup.owners);
   householdsStore.set(backup.households ?? []);
   guestsStore.set(backup.guests ?? []);
+  travelSegmentsStore.set(backup.travelSegments ?? []);
+  hotelsStore.set(backup.hotels ?? []);
+  roomTypesStore.set(backup.roomTypes ?? []);
+  roomsStore.set(backup.rooms ?? []);
+  roomAssignmentsStore.set(backup.roomAssignments ?? []);
+  vehiclesStore.set(backup.vehicles ?? []);
+  driversStore.set(backup.drivers ?? []);
+  transportRoutesStore.set(backup.transportRoutes ?? []);
+  transportAssignmentsStore.set(backup.transportAssignments ?? []);
 }
 
 function csvEscape(value: string | number | undefined | null): string {
@@ -325,9 +486,230 @@ export function rsvpReportToCSV(guests: Guest[], households: Household[]): strin
   return [headers.join(','), ...rows].join('\n');
 }
 
+export function travelToCSV(segments: TravelSegment[], guests: Guest[], households: Household[]): string {
+  const guestById = new Map(guests.map((g) => [g.id, g]));
+  const householdById = new Map(households.map((h) => [h.id, h]));
+  const headers = [
+    'Guest Name', 'Household', 'Event', 'Direction', 'Mode', 'Origin', 'Destination',
+    'Carrier', 'Service Number', 'Booking Reference', 'Booking Status', 'Ticket Confirmed',
+    'Date', 'Time', 'Pickup Required', 'Drop Required', 'Notes',
+  ];
+  const rows = segments.map((segment) => {
+    const guest = guestById.get(segment.guestId);
+    const household = guest ? householdById.get(guest.householdId) : undefined;
+    return [
+      guest?.fullName ?? '',
+      household?.householdName ?? '',
+      segment.event,
+      segment.direction,
+      segment.travelMode,
+      segment.origin,
+      segment.destination,
+      segment.carrier ?? '',
+      segment.serviceNumber ?? '',
+      segment.bookingReference ?? '',
+      segment.bookingStatus,
+      segment.ticketConfirmed ? 'Yes' : 'No',
+      segment.direction === 'Arrival' ? (segment.arrivalDate ?? '') : (segment.departureDate ?? ''),
+      segment.direction === 'Arrival' ? (segment.arrivalTime ?? '') : (segment.departureTime ?? ''),
+      segment.pickupRequired ? 'Yes' : 'No',
+      segment.dropRequired ? 'Yes' : 'No',
+      segment.notes ?? '',
+    ]
+      .map(csvEscape)
+      .join(',');
+  });
+  return [headers.join(','), ...rows].join('\n');
+}
+
+export function roomAssignmentsToCSV(
+  assignments: RoomAssignment[],
+  guests: Guest[],
+  rooms: Room[],
+  roomTypes: RoomType[],
+  hotels: Hotel[],
+): string {
+  const guestById = new Map(guests.map((g) => [g.id, g]));
+  const roomById = new Map(rooms.map((r) => [r.id, r]));
+  const roomTypeById = new Map(roomTypes.map((rt) => [rt.id, rt]));
+  const hotelById = new Map(hotels.map((h) => [h.id, h]));
+  const headers = [
+    'Guest Name', 'Hotel', 'Room Number', 'Room Type', 'Check-In', 'Check-Out', 'Status',
+    'Accessibility Required', 'Extra Bed Required', 'Child Cot Required', 'Confirmation Number',
+  ];
+  const rows = assignments.map((assignment) => {
+    const guest = guestById.get(assignment.guestId);
+    const room = roomById.get(assignment.roomId);
+    const roomType = room ? roomTypeById.get(room.roomTypeId) : undefined;
+    const hotel = room ? hotelById.get(room.hotelId) : undefined;
+    return [
+      guest?.fullName ?? '',
+      hotel?.name ?? '',
+      room?.roomNumber ?? '',
+      roomType?.name ?? '',
+      assignment.checkInDate,
+      assignment.checkOutDate,
+      assignment.assignmentStatus,
+      assignment.accessibilityRequired ? 'Yes' : 'No',
+      assignment.extraBedRequired ? 'Yes' : 'No',
+      assignment.childCotRequired ? 'Yes' : 'No',
+      assignment.confirmationNumber ?? '',
+    ]
+      .map(csvEscape)
+      .join(',');
+  });
+  return [headers.join(','), ...rows].join('\n');
+}
+
+function isPickupRoute(route: TransportRoute): boolean {
+  return route.routeType.includes('Pickup');
+}
+
+function isDropRoute(route: TransportRoute): boolean {
+  return route.routeType.includes('Drop');
+}
+
+function manifestRows(
+  transportAssignments: TransportAssignment[],
+  routeFilter: (route: TransportRoute) => boolean,
+  guests: Guest[],
+  routes: TransportRoute[],
+  vehicles: Vehicle[],
+  drivers: Driver[],
+): string[] {
+  const guestById = new Map(guests.map((g) => [g.id, g]));
+  const routeById = new Map(routes.map((r) => [r.id, r]));
+  const vehicleById = new Map(vehicles.map((v) => [v.id, v]));
+  const driverById = new Map(drivers.map((d) => [d.id, d]));
+
+  return transportAssignments
+    .map((assignment) => {
+      const route = routeById.get(assignment.routeId);
+      if (!route || !routeFilter(route)) return null;
+      const guest = guestById.get(assignment.guestId);
+      const vehicle = route.vehicleId ? vehicleById.get(route.vehicleId) : undefined;
+      const driver = route.driverId ? driverById.get(route.driverId) : undefined;
+      return [
+        guest?.fullName ?? '',
+        route.name,
+        route.origin,
+        route.destination,
+        assignment.pickupDate ?? route.plannedDepartureDate ?? '',
+        assignment.pickupTime ?? route.plannedDepartureTime ?? '',
+        vehicle?.name ?? 'Unassigned',
+        driver?.name ?? 'Unassigned',
+        String(assignment.seatCount),
+        assignment.assistanceRequired ? 'Yes' : 'No',
+        assignment.assignmentStatus,
+      ]
+        .map(csvEscape)
+        .join(',');
+    })
+    .filter((row): row is string => row !== null);
+}
+
+const MANIFEST_HEADERS = [
+  'Guest Name', 'Route', 'Origin', 'Destination', 'Date', 'Time', 'Vehicle', 'Driver', 'Seats', 'Assistance Required', 'Status',
+];
+
+export function pickupManifestToCSV(
+  transportAssignments: TransportAssignment[],
+  routes: TransportRoute[],
+  guests: Guest[],
+  vehicles: Vehicle[],
+  drivers: Driver[],
+): string {
+  const rows = manifestRows(transportAssignments, isPickupRoute, guests, routes, vehicles, drivers);
+  return [MANIFEST_HEADERS.join(','), ...rows].join('\n');
+}
+
+export function dropManifestToCSV(
+  transportAssignments: TransportAssignment[],
+  routes: TransportRoute[],
+  guests: Guest[],
+  vehicles: Vehicle[],
+  drivers: Driver[],
+): string {
+  const rows = manifestRows(transportAssignments, isDropRoute, guests, routes, vehicles, drivers);
+  return [MANIFEST_HEADERS.join(','), ...rows].join('\n');
+}
+
+export function vehicleManifestToCSV(vehicles: Vehicle[], routes: TransportRoute[], transportAssignments: TransportAssignment[]): string {
+  const headers = [
+    'Vehicle', 'Type', 'Registration Number', 'Passenger Capacity', 'Vendor', 'Status', 'Backup Vehicle',
+    'Route Count', 'Total Seats Assigned',
+  ];
+  const rows = vehicles.map((vehicle) => {
+    const vehicleRoutes = routes.filter((r) => r.vehicleId === vehicle.id);
+    const routeIds = new Set(vehicleRoutes.map((r) => r.id));
+    const seatsAssigned = transportAssignments
+      .filter((a) => routeIds.has(a.routeId))
+      .reduce((sum, a) => sum + a.seatCount, 0);
+    return [
+      vehicle.name,
+      vehicle.vehicleType,
+      vehicle.registrationNumber ?? '',
+      String(vehicle.passengerCapacity),
+      vehicle.vendorName ?? '',
+      vehicle.status,
+      vehicle.backupVehicle ? 'Yes' : 'No',
+      String(vehicleRoutes.length),
+      String(seatsAssigned),
+    ]
+      .map(csvEscape)
+      .join(',');
+  });
+  return [headers.join(','), ...rows].join('\n');
+}
+
+export function driverDirectoryToCSV(drivers: Driver[], vehicles: Vehicle[], routes: TransportRoute[]): string {
+  const vehicleById = new Map(vehicles.map((v) => [v.id, v]));
+  const headers = ['Driver Name', 'Phone', 'Alternate Phone', 'Assigned Vehicle', 'Active Route Count', 'Notes'];
+  const rows = drivers.map((driver) => {
+    const vehicle = driver.vehicleId ? vehicleById.get(driver.vehicleId) : undefined;
+    const activeRouteCount = routes.filter(
+      (r) => r.driverId === driver.id && ['Planned', 'Confirmed', 'Dispatched', 'In Progress'].includes(r.status),
+    ).length;
+    return [driver.name, driver.phone, driver.alternatePhone ?? '', vehicle?.name ?? '', String(activeRouteCount), driver.notes ?? '']
+      .map(csvEscape)
+      .join(',');
+  });
+  return [headers.join(','), ...rows].join('\n');
+}
+
 export function backupFilename(): string {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   return `weddingos-backup-${stamp}.json`;
+}
+
+export function travelCsvFilename(): string {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `weddingos-travel-${stamp}.csv`;
+}
+
+export function roomAssignmentsCsvFilename(): string {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `weddingos-room-assignments-${stamp}.csv`;
+}
+
+export function pickupManifestCsvFilename(): string {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `weddingos-pickup-manifest-${stamp}.csv`;
+}
+
+export function dropManifestCsvFilename(): string {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `weddingos-drop-manifest-${stamp}.csv`;
+}
+
+export function vehicleManifestCsvFilename(): string {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `weddingos-vehicle-manifest-${stamp}.csv`;
+}
+
+export function driverDirectoryCsvFilename(): string {
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  return `weddingos-driver-directory-${stamp}.csv`;
 }
 
 export function tasksCsvFilename(): string {

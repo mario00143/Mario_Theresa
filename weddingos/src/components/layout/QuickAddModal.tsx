@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Field, Input, Label, Select } from '@/components/ui/Field';
@@ -8,23 +9,33 @@ import { useDecisions } from '@/hooks/useDecisions';
 import { useOwners } from '@/hooks/useOwners';
 import { useHouseholds } from '@/hooks/useHouseholds';
 import { useGuests } from '@/hooks/useGuests';
-import { PRIORITIES, HOUSEHOLD_SIDES, AGE_CATEGORIES } from '@/types';
+import { useTravel } from '@/hooks/useTravel';
+import { useHotels } from '@/hooks/useHotels';
+import { useTransportRoutes } from '@/hooks/useTransportRoutes';
+import { PRIORITIES, HOUSEHOLD_SIDES, AGE_CATEGORIES, TRAVEL_DIRECTIONS, ROUTE_TYPES, type TravelDirection, type RouteType } from '@/types';
 
 const MODE_LABELS: Record<QuickAddMode, string> = {
   task: 'New Task',
   decision: 'New Decision',
   household: 'New Household',
   guest: 'New Guest',
+  travel: 'New Travel',
+  hotel: 'New Hotel',
+  route: 'New Route',
 };
 
 export function QuickAddModal() {
-  const { quickAddOpen, quickAddMode, closeQuickAdd, openTaskDetail, openDecisionDetail, openHouseholdDetail, openGuestDetail } =
+  const { quickAddOpen, quickAddMode, closeQuickAdd, openTaskDetail, openDecisionDetail, openHouseholdDetail, openGuestDetail, openTravelDetail } =
     useUI();
+  const navigate = useNavigate();
   const { addTask } = useTasks();
   const { addDecision } = useDecisions();
   const { owners } = useOwners();
   const { households, addHousehold } = useHouseholds();
-  const { addGuest } = useGuests();
+  const { guests, addGuest } = useGuests();
+  const { addTravelSegment } = useTravel();
+  const { addHotel } = useHotels();
+  const { addTransportRoute } = useTransportRoutes();
 
   const [mode, setMode] = useState<QuickAddMode>(quickAddMode);
 
@@ -47,6 +58,22 @@ export function QuickAddModal() {
   const [weddingInvited, setWeddingInvited] = useState(true);
   const [engagementInvited, setEngagementInvited] = useState(false);
 
+  // Travel fields
+  const [travelGuestId, setTravelGuestId] = useState('');
+  const [travelDirection, setTravelDirection] = useState<TravelDirection>('Arrival');
+  const [travelOrigin, setTravelOrigin] = useState('');
+  const [travelDestination, setTravelDestination] = useState('');
+
+  // Hotel fields
+  const [hotelName, setHotelName] = useState('');
+  const [hotelCity, setHotelCity] = useState('');
+
+  // Transport route fields
+  const [routeName, setRouteName] = useState('');
+  const [routeType, setRouteType] = useState<RouteType>('Airport Pickup');
+  const [routeOrigin, setRouteOrigin] = useState('');
+  const [routeDestination, setRouteDestination] = useState('');
+
   const resetAndClose = () => {
     setTitle('');
     setOwner('');
@@ -61,6 +88,16 @@ export function QuickAddModal() {
     setAgeCategory('Adult');
     setWeddingInvited(true);
     setEngagementInvited(false);
+    setTravelGuestId('');
+    setTravelDirection('Arrival');
+    setTravelOrigin('');
+    setTravelDestination('');
+    setHotelName('');
+    setHotelCity('');
+    setRouteName('');
+    setRouteType('Airport Pickup');
+    setRouteOrigin('');
+    setRouteDestination('');
     closeQuickAdd();
   };
 
@@ -72,7 +109,10 @@ export function QuickAddModal() {
     (mode === 'task' && title.trim().length > 0) ||
     (mode === 'decision' && title.trim().length > 0) ||
     (mode === 'household' && householdName.trim().length > 0 && primaryContactName.trim().length > 0) ||
-    (mode === 'guest' && guestName.trim().length > 0 && guestHouseholdId.length > 0);
+    (mode === 'guest' && guestName.trim().length > 0 && guestHouseholdId.length > 0) ||
+    (mode === 'travel' && travelGuestId.length > 0 && travelOrigin.trim().length > 0 && travelDestination.trim().length > 0) ||
+    (mode === 'hotel' && hotelName.trim().length > 0 && hotelCity.trim().length > 0) ||
+    (mode === 'route' && routeName.trim().length > 0 && routeOrigin.trim().length > 0 && routeDestination.trim().length > 0);
 
   const handleSubmit = () => {
     if (mode === 'task') {
@@ -118,7 +158,7 @@ export function QuickAddModal() {
       });
       resetAndClose();
       openHouseholdDetail(household.id);
-    } else {
+    } else if (mode === 'guest') {
       if (!guestName.trim() || !guestHouseholdId) return;
       const invitedEvents = [...(weddingInvited ? (['Wedding'] as const) : []), ...(engagementInvited ? (['Engagement'] as const) : [])];
       const guest = addGuest({
@@ -135,6 +175,50 @@ export function QuickAddModal() {
       });
       resetAndClose();
       openGuestDetail(guest.id);
+    } else if (mode === 'travel') {
+      if (!travelGuestId || !travelOrigin.trim() || !travelDestination.trim()) return;
+      const guest = guests.find((g) => g.id === travelGuestId);
+      if (!guest) return;
+      const segment = addTravelSegment({
+        guestId: travelGuestId,
+        householdId: guest.householdId,
+        event: 'Wedding',
+        direction: travelDirection,
+        travelMode: 'Flight',
+        origin: travelOrigin.trim(),
+        destination: travelDestination.trim(),
+        bookingStatus: 'Not Booked',
+        ticketConfirmed: false,
+        pickupRequired: false,
+        dropRequired: false,
+      });
+      resetAndClose();
+      openTravelDetail(segment.id);
+    } else if (mode === 'hotel') {
+      if (!hotelName.trim() || !hotelCity.trim()) return;
+      addHotel({
+        name: hotelName.trim(),
+        area: '',
+        city: hotelCity.trim(),
+        breakfastIncluded: false,
+        parkingAvailable: false,
+        busAccess: false,
+        accessibleRoomsAvailable: false,
+      });
+      resetAndClose();
+      navigate('/logistics/hotels');
+    } else if (mode === 'route') {
+      if (!routeName.trim() || !routeOrigin.trim() || !routeDestination.trim()) return;
+      addTransportRoute({
+        name: routeName.trim(),
+        event: 'Wedding',
+        routeType,
+        origin: routeOrigin.trim(),
+        destination: routeDestination.trim(),
+        status: 'Planned',
+      });
+      resetAndClose();
+      navigate('/logistics/transport');
     }
   };
 
@@ -150,7 +234,7 @@ export function QuickAddModal() {
             Cancel
           </Button>
           <Button variant="primary" onClick={handleSubmit} disabled={!isValid}>
-            Create {mode === 'household' ? 'Household' : mode === 'guest' ? 'Guest' : mode === 'task' ? 'Task' : 'Decision'}
+            Create {MODE_LABELS[mode].replace('New ', '')}
           </Button>
         </>
       }
@@ -304,6 +388,103 @@ export function QuickAddModal() {
             </label>
           </div>
           <p className="text-xs text-ink-faint">You can edit RSVP, dietary, hospitality and more right after creating this guest.</p>
+        </div>
+      )}
+
+      {mode === 'travel' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-travel-guest" required>
+              Guest
+            </Label>
+            <Select id="quick-add-travel-guest" value={travelGuestId} onChange={(e) => setTravelGuestId(e.target.value)}>
+              <option value="">Select a guest…</option>
+              {guests.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.fullName}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-travel-direction">Direction</Label>
+            <Select id="quick-add-travel-direction" value={travelDirection} onChange={(e) => setTravelDirection(e.target.value as TravelDirection)}>
+              {TRAVEL_DIRECTIONS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field>
+              <Label htmlFor="quick-add-travel-origin" required>
+                Origin
+              </Label>
+              <Input id="quick-add-travel-origin" value={travelOrigin} onChange={(e) => setTravelOrigin(e.target.value)} placeholder="e.g. Kochi" autoFocus />
+            </Field>
+            <Field>
+              <Label htmlFor="quick-add-travel-destination" required>
+                Destination
+              </Label>
+              <Input id="quick-add-travel-destination" value={travelDestination} onChange={(e) => setTravelDestination(e.target.value)} placeholder="e.g. RGIA (Hyderabad Airport)" />
+            </Field>
+          </div>
+          <p className="text-xs text-ink-faint">You can edit mode, schedule, booking, and pickup/drop needs right after creating this travel segment.</p>
+        </div>
+      )}
+
+      {mode === 'hotel' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-hotel-name" required>
+              Hotel name
+            </Label>
+            <Input id="quick-add-hotel-name" value={hotelName} onChange={(e) => setHotelName(e.target.value)} placeholder="e.g. Marigold Grand Hyderabad" autoFocus />
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-hotel-city" required>
+              City
+            </Label>
+            <Input id="quick-add-hotel-city" value={hotelCity} onChange={(e) => setHotelCity(e.target.value)} placeholder="e.g. Hyderabad" />
+          </Field>
+          <p className="text-xs text-ink-faint">You can add room types and rooms right after creating this hotel.</p>
+        </div>
+      )}
+
+      {mode === 'route' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-route-name" required>
+              Route name
+            </Label>
+            <Input id="quick-add-route-name" value={routeName} onChange={(e) => setRouteName(e.target.value)} placeholder="e.g. RGIA Morning Pickup" autoFocus />
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-route-type">Route type</Label>
+            <Select id="quick-add-route-type" value={routeType} onChange={(e) => setRouteType(e.target.value as RouteType)}>
+              {ROUTE_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field>
+              <Label htmlFor="quick-add-route-origin" required>
+                Origin
+              </Label>
+              <Input id="quick-add-route-origin" value={routeOrigin} onChange={(e) => setRouteOrigin(e.target.value)} placeholder="e.g. RGIA (Hyderabad Airport)" />
+            </Field>
+            <Field>
+              <Label htmlFor="quick-add-route-destination" required>
+                Destination
+              </Label>
+              <Input id="quick-add-route-destination" value={routeDestination} onChange={(e) => setRouteDestination(e.target.value)} placeholder="e.g. Hotel name" />
+            </Field>
+          </div>
+          <p className="text-xs text-ink-faint">You can assign a vehicle and driver right after creating this route.</p>
         </div>
       )}
     </Modal>

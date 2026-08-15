@@ -8,6 +8,7 @@ import { TaskDetailDrawer } from '@/features/tasks/TaskDetailDrawer';
 import { DecisionDetailDrawer } from '@/features/decisions/DecisionDetailDrawer';
 import { HouseholdDetailDrawer } from '@/features/guests/HouseholdDetailDrawer';
 import { GuestDetailDrawer } from '@/features/guests/GuestDetailDrawer';
+import { TravelDetailDrawer } from '@/features/logistics/TravelDetailDrawer';
 
 export function AppShell() {
   return (
@@ -29,6 +30,7 @@ export function AppShell() {
       <DecisionDetailDrawer />
       <HouseholdDetailDrawer />
       <GuestDetailDrawer />
+      <TravelDetailDrawer />
     </div>
   );
 }

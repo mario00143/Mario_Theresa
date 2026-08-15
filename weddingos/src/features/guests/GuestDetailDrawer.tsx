@@ -23,6 +23,7 @@ import { formatDisplayDate } from '@/utils/date';
 import { findSimilarGuests } from '@/utils/duplicateDetection';
 import { getGuestRsvpForEvent } from '@/utils/rsvpLogic';
 import { DuplicateWarnings } from './DuplicateWarnings';
+import { GuestLogisticsSection } from '@/features/logistics/GuestLogisticsSection';
 
 export function GuestDetailDrawer() {
   const { selectedGuestId, closeGuestDetail, openHouseholdDetail } = useUI();
@@ -324,6 +325,11 @@ export function GuestDetailDrawer() {
                 ))}
               </Select>
             </Field>
+          </section>
+
+          <section className="space-y-3 border-t border-line-soft pt-5">
+            <p className="text-sm font-semibold text-ink">Logistics</p>
+            <GuestLogisticsSection guestId={guest.id} />
           </section>
 
           <section className="space-y-3 border-t border-line-soft pt-5">

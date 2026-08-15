@@ -24,6 +24,7 @@ import { findSimilarHouseholds } from '@/utils/duplicateDetection';
 import { InvitationStatusBadge } from './GuestBadges';
 import { DuplicateWarnings } from './DuplicateWarnings';
 import { HouseholdRsvpEditor } from './HouseholdRsvpEditor';
+import { HouseholdLogisticsSummary } from '@/features/logistics/HouseholdLogisticsSummary';
 
 export function HouseholdDetailDrawer() {
   const { selectedHouseholdId, closeHouseholdDetail, openGuestDetail, openQuickAdd } = useUI();
@@ -420,6 +421,11 @@ export function HouseholdDetailDrawer() {
           <section className="space-y-3 border-t border-line-soft pt-5">
             <p className="text-sm font-semibold text-ink">RSVP summary</p>
             <HouseholdRsvpEditor household={household} />
+          </section>
+
+          <section className="space-y-3 border-t border-line-soft pt-5">
+            <p className="text-sm font-semibold text-ink">Logistics</p>
+            <HouseholdLogisticsSummary members={members} />
           </section>
 
           <section className="space-y-3 border-t border-line-soft pt-5">

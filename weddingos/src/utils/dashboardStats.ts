@@ -1,4 +1,4 @@
-import type { Decision, Guest, Household, Task } from '@/types';
+import type { Decision, Guest, Household, RoomAssignment, Task, TransportAssignment, TransportRoute, TravelSegment, Vehicle } from '@/types';
 import {
   completionPercentage,
   criticalCompletionPercentage,
@@ -11,6 +11,9 @@ import {
 import { isDecisionOverdue } from './decisionLogic';
 import { isFollowUpOverdue } from './invitationLogic';
 import { detectDataIssues } from './guestDataQuality';
+import { findGuestsRequiringAccommodationUnassigned } from './logisticsStats';
+import { isTransportAssignmentActive, seatsAssignedForRoute } from './transportLogic';
+import { daysUntil } from './date';
 
 export interface PlanningHealth {
   overallCompletion: number;
@@ -45,7 +48,7 @@ export interface AttentionItem {
   id: string;
   severity: AttentionSeverity;
   message: string;
-  linkType: 'task' | 'decision' | 'household' | 'guest' | 'route';
+  linkType: 'task' | 'decision' | 'household' | 'guest' | 'route' | 'travel';
   linkId: string;
 }
 
@@ -159,6 +162,94 @@ export function buildGuestAttentionItems(households: Household[], guests: Guest[
       linkType: 'route',
       linkId: '/guests/reports',
     });
+  }
+
+  return items;
+}
+
+/**
+ * Logistics-related Attention Required items: unassigned pickups, guests
+ * needing a room, vehicle capacity conflicts, routes without a driver, and
+ * guests arriving within 7 days whose travel/accommodation/pickup chain is
+ * still incomplete. Deliberately narrow — the full 17-check list lives in
+ * Logistics > Reports > Data Issues, not on the main dashboard.
+ */
+export function buildLogisticsAttentionItems(
+  guests: Guest[],
+  travelSegments: TravelSegment[],
+  roomAssignments: RoomAssignment[],
+  vehicles: Vehicle[],
+  routes: TransportRoute[],
+  transportAssignments: TransportAssignment[],
+): AttentionItem[] {
+  const items: AttentionItem[] = [];
+  const guestById = new Map(guests.map((g) => [g.id, g]));
+  const vehicleById = new Map(vehicles.map((v) => [v.id, v]));
+  const activeTransport = transportAssignments.filter(isTransportAssignmentActive);
+  const assignedSegmentIds = new Set(activeTransport.map((a) => a.travelSegmentId).filter(Boolean));
+
+  for (const segment of travelSegments) {
+    if (segment.direction === 'Arrival' && segment.pickupRequired && !assignedSegmentIds.has(segment.id)) {
+      const guestName = guestById.get(segment.guestId)?.fullName ?? 'A guest';
+      const arrivesSoon = daysUntil(segment.arrivalDate) !== null && daysUntil(segment.arrivalDate)! <= 7 && daysUntil(segment.arrivalDate)! >= 0;
+      items.push({
+        id: `logistics-pickup-unassigned-${segment.id}`,
+        severity: arrivesSoon ? 'critical' : 'warning',
+        message: `Pickup unassigned for "${guestName}" (${segment.destination})`,
+        linkType: 'travel',
+        linkId: segment.id,
+      });
+    }
+  }
+
+  const unassignedAccommodationGuests = findGuestsRequiringAccommodationUnassigned(guests, roomAssignments);
+  for (const guest of unassignedAccommodationGuests) {
+    items.push({
+      id: `logistics-room-unassigned-${guest.id}`,
+      severity: 'warning',
+      message: `Room unassigned for "${guest.fullName}"`,
+      linkType: 'guest',
+      linkId: guest.id,
+    });
+  }
+
+  const unassignedAccommodationGuestIds = new Set(unassignedAccommodationGuests.map((g) => g.id));
+  for (const segment of travelSegments) {
+    if (segment.direction !== 'Arrival') continue;
+    const arrivesSoon = daysUntil(segment.arrivalDate) !== null && daysUntil(segment.arrivalDate)! <= 7 && daysUntil(segment.arrivalDate)! >= 0;
+    if (!arrivesSoon || !unassignedAccommodationGuestIds.has(segment.guestId)) continue;
+    const guestName = guestById.get(segment.guestId)?.fullName ?? 'A guest';
+    items.push({
+      id: `logistics-arrival-soon-no-room-${segment.id}`,
+      severity: 'critical',
+      message: `"${guestName}" arrives within 7 days but still has no room assigned`,
+      linkType: 'guest',
+      linkId: segment.guestId,
+    });
+  }
+
+  for (const route of routes) {
+    if (route.vehicleId) {
+      const vehicle = vehicleById.get(route.vehicleId);
+      if (vehicle && seatsAssignedForRoute(transportAssignments, route.id) > vehicle.passengerCapacity) {
+        items.push({
+          id: `logistics-vehicle-capacity-${route.id}`,
+          severity: 'critical',
+          message: `Vehicle capacity exceeded on route "${route.name}"`,
+          linkType: 'route',
+          linkId: '/logistics/transport',
+        });
+      }
+    }
+    if (!route.driverId) {
+      items.push({
+        id: `logistics-route-no-driver-${route.id}`,
+        severity: 'warning',
+        message: `Route "${route.name}" has no driver assigned`,
+        linkType: 'route',
+        linkId: '/logistics/transport',
+      });
+    }
   }
 
   return items;
