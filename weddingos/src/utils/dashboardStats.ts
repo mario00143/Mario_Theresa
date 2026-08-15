@@ -1,4 +1,4 @@
-import type { Decision, Task } from '@/types';
+import type { Decision, Guest, Household, Task } from '@/types';
 import {
   completionPercentage,
   criticalCompletionPercentage,
@@ -9,6 +9,8 @@ import {
   isTaskOverdue,
 } from './taskLogic';
 import { isDecisionOverdue } from './decisionLogic';
+import { isFollowUpOverdue } from './invitationLogic';
+import { detectDataIssues } from './guestDataQuality';
 
 export interface PlanningHealth {
   overallCompletion: number;
@@ -43,7 +45,7 @@ export interface AttentionItem {
   id: string;
   severity: AttentionSeverity;
   message: string;
-  linkType: 'task' | 'decision';
+  linkType: 'task' | 'decision' | 'household' | 'guest' | 'route';
   linkId: string;
 }
 
@@ -121,4 +123,43 @@ export function upcomingIncompleteTasks(tasks: Task[], limit = 10): Task[] {
     .filter((t) => t.status !== 'Done' && t.status !== 'Cancelled' && t.dueDate)
     .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : a.dueDate! > b.dueDate! ? 1 : 0))
     .slice(0, limit);
+}
+
+/** Guest-related Attention Required items: overdue RSVP follow-ups, households flagged for invitation follow-up, and a data-quality summary. */
+export function buildGuestAttentionItems(households: Household[], guests: Guest[]): AttentionItem[] {
+  const items: AttentionItem[] = [];
+
+  for (const household of households) {
+    if (isFollowUpOverdue(household)) {
+      items.push({
+        id: `rsvp-followup-overdue-${household.id}`,
+        severity: 'critical',
+        message: `RSVP follow-up overdue for "${household.householdName}"`,
+        linkType: 'household',
+        linkId: household.id,
+      });
+    }
+    if (household.invitationStatus === 'Follow-up Required') {
+      items.push({
+        id: `invitation-followup-${household.id}`,
+        severity: 'warning',
+        message: `Invitation follow-up required for "${household.householdName}"`,
+        linkType: 'household',
+        linkId: household.id,
+      });
+    }
+  }
+
+  const dataIssues = detectDataIssues(households, guests);
+  if (dataIssues.length > 0) {
+    items.push({
+      id: 'guest-data-issues-summary',
+      severity: 'warning',
+      message: `${dataIssues.length} guest data issue${dataIssues.length === 1 ? '' : 's'} need${dataIssues.length === 1 ? 's' : ''} review`,
+      linkType: 'route',
+      linkId: '/guests/reports',
+    });
+  }
+
+  return items;
 }

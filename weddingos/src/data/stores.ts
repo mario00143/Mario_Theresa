@@ -1,4 +1,4 @@
-import type { AppSettings, Decision, Owner, Task } from '@/types';
+import type { AppSettings, Decision, Guest, Household, Owner, Task } from '@/types';
 import { createStore } from '@/lib/store';
 import { readJSON, STORAGE_KEYS, writeJSON } from '@/lib/storage';
 import { createSeedBundle } from './seed';
@@ -17,6 +17,8 @@ function ensureSeeded(): void {
   writeJSON(STORAGE_KEYS.tasks, bundle.tasks);
   writeJSON(STORAGE_KEYS.decisions, bundle.decisions);
   writeJSON(STORAGE_KEYS.owners, bundle.owners);
+  writeJSON(STORAGE_KEYS.households, bundle.households);
+  writeJSON(STORAGE_KEYS.guests, bundle.guests);
   writeJSON(STORAGE_KEYS.seeded, true);
 }
 
@@ -26,6 +28,8 @@ export const settingsStore = createStore<AppSettings>(STORAGE_KEYS.settings, see
 export const tasksStore = createStore<Task[]>(STORAGE_KEYS.tasks, []);
 export const decisionsStore = createStore<Decision[]>(STORAGE_KEYS.decisions, []);
 export const ownersStore = createStore<Owner[]>(STORAGE_KEYS.owners, []);
+export const householdsStore = createStore<Household[]>(STORAGE_KEYS.households, []);
+export const guestsStore = createStore<Guest[]>(STORAGE_KEYS.guests, []);
 
 function seedSettingsFallback(): AppSettings {
   // ensureSeeded() above guarantees settings already exist in storage by this point;
@@ -40,5 +44,7 @@ export function resetToDemoData(): void {
   tasksStore.set(bundle.tasks);
   decisionsStore.set(bundle.decisions);
   ownersStore.set(bundle.owners);
+  householdsStore.set(bundle.households);
+  guestsStore.set(bundle.guests);
   writeJSON(STORAGE_KEYS.seeded, true);
 }

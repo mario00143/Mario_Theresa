@@ -6,18 +6,29 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import {
   backupFilename,
   exportBackup,
+  guestsCsvFilename,
+  guestsToCSV,
+  householdsCsvFilename,
+  householdsToCSV,
   importBackup,
+  normalizeBackup,
+  rsvpReportCsvFilename,
+  rsvpReportToCSV,
   tasksCsvFilename,
   tasksToCSV,
   validateBackup,
 } from '@/data/repositories/backupRepository';
 import { resetToDemoData } from '@/data/stores';
 import { useTasks } from '@/hooks/useTasks';
+import { useHouseholds } from '@/hooks/useHouseholds';
+import { useGuests } from '@/hooks/useGuests';
 import { downloadTextFile } from '@/utils/download';
 import type { WeddingOSBackup } from '@/types';
 
 export function DataManagement() {
   const { tasks } = useTasks();
+  const { households } = useHouseholds();
+  const { guests } = useGuests();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingImport, setPendingImport] = useState<WeddingOSBackup | null>(null);
   const [importErrors, setImportErrors] = useState<string[]>([]);
@@ -30,9 +41,24 @@ export function DataManagement() {
     setStatus('Backup exported.');
   };
 
-  const handleExportCSV = () => {
+  const handleExportTasksCSV = () => {
     downloadTextFile(tasksCsvFilename(), tasksToCSV(tasks), 'text/csv');
     setStatus('Tasks exported as CSV.');
+  };
+
+  const handleExportHouseholdsCSV = () => {
+    downloadTextFile(householdsCsvFilename(), householdsToCSV(households, guests), 'text/csv');
+    setStatus('Households exported as CSV.');
+  };
+
+  const handleExportGuestsCSV = () => {
+    downloadTextFile(guestsCsvFilename(), guestsToCSV(guests, households), 'text/csv');
+    setStatus('Guests exported as CSV.');
+  };
+
+  const handleExportRsvpReportCSV = () => {
+    downloadTextFile(rsvpReportCsvFilename(), rsvpReportToCSV(guests, households), 'text/csv');
+    setStatus('RSVP report exported as CSV.');
   };
 
   const handleFileSelected = async (file: File) => {
@@ -46,7 +72,7 @@ export function DataManagement() {
         setImportErrors(validation.errors);
         return;
       }
-      setPendingImport(data as WeddingOSBackup);
+      setPendingImport(normalizeBackup(data));
     } catch {
       setImportErrors(['File is not valid JSON.']);
     }
@@ -55,8 +81,13 @@ export function DataManagement() {
   const confirmImport = () => {
     if (!pendingImport) return;
     importBackup(pendingImport);
+    const wasV1 = pendingImport.version < 2;
     setPendingImport(null);
-    setStatus('Backup imported successfully.');
+    setStatus(
+      wasV1
+        ? 'Backup imported successfully. This was a version 1 (Phase 1) backup, so guest data was initialized empty.'
+        : 'Backup imported successfully.',
+    );
   };
 
   const handleReset = () => {
@@ -85,7 +116,10 @@ export function DataManagement() {
 
         <div>
           <p className="text-sm font-medium text-ink">Backup</p>
-          <p className="text-xs text-ink-faint mt-0.5 mb-2.5">Export everything — settings, tasks, decisions, and owner roles — as a single JSON file.</p>
+          <p className="text-xs text-ink-faint mt-0.5 mb-2.5">
+            Export everything — settings, tasks, decisions, owner roles, households, and guests — as a single JSON file.
+            Version 1 (Phase 1) backups can still be imported; guest data is initialized empty for those files.
+          </p>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportJSON}>
               Export backup (JSON)
@@ -112,11 +146,22 @@ export function DataManagement() {
         </div>
 
         <div>
-          <p className="text-sm font-medium text-ink">Export</p>
-          <p className="text-xs text-ink-faint mt-0.5 mb-2.5">Export all tasks as a spreadsheet-friendly CSV file.</p>
-          <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportCSV}>
-            Export tasks (CSV)
-          </Button>
+          <p className="text-sm font-medium text-ink">Export CSV</p>
+          <p className="text-xs text-ink-faint mt-0.5 mb-2.5">Spreadsheet-friendly exports for tasks, households, guests, and the per-event RSVP report.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportTasksCSV}>
+              Export tasks (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportHouseholdsCSV}>
+              Export households (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportGuestsCSV}>
+              Export guests (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportRsvpReportCSV}>
+              Export RSVP report (CSV)
+            </Button>
+          </div>
         </div>
 
         <div>
@@ -131,7 +176,7 @@ export function DataManagement() {
       <ConfirmDialog
         open={pendingImport !== null}
         title="Import backup"
-        message="Importing will replace all current settings, tasks, decisions, and owner roles with the contents of this file. This cannot be undone."
+        message="Importing will replace all current settings, tasks, decisions, owner roles, households, and guests with the contents of this file. This cannot be undone."
         confirmLabel="Import and overwrite"
         danger
         onConfirm={confirmImport}
@@ -141,7 +186,7 @@ export function DataManagement() {
       <ConfirmDialog
         open={confirmReset}
         title="Reset to demo data"
-        message="This will permanently delete all current settings, tasks, decisions, and owner roles, replacing them with the original demo dataset."
+        message="This will permanently delete all current settings, tasks, decisions, owner roles, households, and guests, replacing them with the original demo dataset."
         confirmLabel="Reset"
         danger
         onConfirm={handleReset}

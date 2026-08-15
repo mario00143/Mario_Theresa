@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { TriangleAlert } from 'lucide-react';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -5,7 +6,28 @@ import type { AttentionItem } from '@/utils/dashboardStats';
 import { useUI } from '@/context/UIContext';
 
 export function AttentionRequired({ items }: { items: AttentionItem[] }) {
-  const { openTaskDetail, openDecisionDetail } = useUI();
+  const { openTaskDetail, openDecisionDetail, openHouseholdDetail, openGuestDetail } = useUI();
+  const navigate = useNavigate();
+
+  const handleClick = (item: AttentionItem) => {
+    switch (item.linkType) {
+      case 'task':
+        openTaskDetail(item.linkId);
+        break;
+      case 'decision':
+        openDecisionDetail(item.linkId);
+        break;
+      case 'household':
+        openHouseholdDetail(item.linkId);
+        break;
+      case 'guest':
+        openGuestDetail(item.linkId);
+        break;
+      case 'route':
+        navigate(item.linkId);
+        break;
+    }
+  };
 
   return (
     <Card>
@@ -22,7 +44,7 @@ export function AttentionRequired({ items }: { items: AttentionItem[] }) {
               <li key={item.id}>
                 <button
                   type="button"
-                  onClick={() => (item.linkType === 'task' ? openTaskDetail(item.linkId) : openDecisionDetail(item.linkId))}
+                  onClick={() => handleClick(item)}
                   className="flex w-full items-start gap-2.5 px-4 py-3 text-left hover:bg-surface-subtle"
                 >
                   <TriangleAlert

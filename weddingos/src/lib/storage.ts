@@ -51,5 +51,7 @@ export const STORAGE_KEYS = {
   tasks: 'tasks',
   decisions: 'decisions',
   owners: 'owners',
+  households: 'households',
+  guests: 'guests',
   seeded: 'seeded',
 } as const;

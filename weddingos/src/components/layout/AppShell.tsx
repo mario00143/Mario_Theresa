@@ -6,6 +6,8 @@ import { GlobalSearchModal } from './GlobalSearchModal';
 import { QuickAddModal } from './QuickAddModal';
 import { TaskDetailDrawer } from '@/features/tasks/TaskDetailDrawer';
 import { DecisionDetailDrawer } from '@/features/decisions/DecisionDetailDrawer';
+import { HouseholdDetailDrawer } from '@/features/guests/HouseholdDetailDrawer';
+import { GuestDetailDrawer } from '@/features/guests/GuestDetailDrawer';
 
 export function AppShell() {
   return (
@@ -25,6 +27,8 @@ export function AppShell() {
       <QuickAddModal />
       <TaskDetailDrawer />
       <DecisionDetailDrawer />
+      <HouseholdDetailDrawer />
+      <GuestDetailDrawer />
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
+export type QuickAddMode = 'task' | 'decision' | 'household' | 'guest';
+
 interface UIContextValue {
   selectedTaskId: string | null;
   openTaskDetail: (taskId: string) => void;
@@ -9,9 +11,17 @@ interface UIContextValue {
   openDecisionDetail: (decisionId: string) => void;
   closeDecisionDetail: () => void;
 
+  selectedHouseholdId: string | null;
+  openHouseholdDetail: (householdId: string) => void;
+  closeHouseholdDetail: () => void;
+
+  selectedGuestId: string | null;
+  openGuestDetail: (guestId: string) => void;
+  closeGuestDetail: () => void;
+
   quickAddOpen: boolean;
-  quickAddMode: 'task' | 'decision';
-  openQuickAdd: (mode?: 'task' | 'decision') => void;
+  quickAddMode: QuickAddMode;
+  openQuickAdd: (mode?: QuickAddMode) => void;
   closeQuickAdd: () => void;
 
   searchOpen: boolean;
@@ -24,8 +34,10 @@ const UIContext = createContext<UIContextValue | null>(null);
 export function UIProvider({ children }: { children: ReactNode }) {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(null);
+  const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | null>(null);
+  const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [quickAddMode, setQuickAddMode] = useState<'task' | 'decision'>('task');
+  const [quickAddMode, setQuickAddMode] = useState<QuickAddMode>('task');
   const [searchOpen, setSearchOpen] = useState(false);
 
   const openTaskDetail = useCallback((taskId: string) => setSelectedTaskId(taskId), []);
@@ -34,7 +46,13 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const openDecisionDetail = useCallback((decisionId: string) => setSelectedDecisionId(decisionId), []);
   const closeDecisionDetail = useCallback(() => setSelectedDecisionId(null), []);
 
-  const openQuickAdd = useCallback((mode: 'task' | 'decision' = 'task') => {
+  const openHouseholdDetail = useCallback((householdId: string) => setSelectedHouseholdId(householdId), []);
+  const closeHouseholdDetail = useCallback(() => setSelectedHouseholdId(null), []);
+
+  const openGuestDetail = useCallback((guestId: string) => setSelectedGuestId(guestId), []);
+  const closeGuestDetail = useCallback(() => setSelectedGuestId(null), []);
+
+  const openQuickAdd = useCallback((mode: QuickAddMode = 'task') => {
     setQuickAddMode(mode);
     setQuickAddOpen(true);
   }, []);
@@ -51,6 +69,12 @@ export function UIProvider({ children }: { children: ReactNode }) {
       selectedDecisionId,
       openDecisionDetail,
       closeDecisionDetail,
+      selectedHouseholdId,
+      openHouseholdDetail,
+      closeHouseholdDetail,
+      selectedGuestId,
+      openGuestDetail,
+      closeGuestDetail,
       quickAddOpen,
       quickAddMode,
       openQuickAdd,
@@ -66,6 +90,12 @@ export function UIProvider({ children }: { children: ReactNode }) {
       selectedDecisionId,
       openDecisionDetail,
       closeDecisionDetail,
+      selectedHouseholdId,
+      openHouseholdDetail,
+      closeHouseholdDetail,
+      selectedGuestId,
+      openGuestDetail,
+      closeGuestDetail,
       quickAddOpen,
       quickAddMode,
       openQuickAdd,

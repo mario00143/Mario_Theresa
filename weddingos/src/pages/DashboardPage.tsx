@@ -1,18 +1,23 @@
 import { useTasks } from '@/hooks/useTasks';
 import { useDecisions } from '@/hooks/useDecisions';
+import { useHouseholds } from '@/hooks/useHouseholds';
+import { useGuests } from '@/hooks/useGuests';
 import { EventCards } from '@/features/dashboard/EventCards';
 import { PlanningHealthGrid } from '@/features/dashboard/PlanningHealthGrid';
 import { AttentionRequired } from '@/features/dashboard/AttentionRequired';
 import { UpcomingTasksList } from '@/features/dashboard/UpcomingTasksList';
 import { WorkstreamProgress } from '@/features/dashboard/WorkstreamProgress';
-import { buildAttentionItems, computePlanningHealth, upcomingIncompleteTasks } from '@/utils/dashboardStats';
+import { GuestSnapshot } from '@/features/dashboard/GuestSnapshot';
+import { buildAttentionItems, buildGuestAttentionItems, computePlanningHealth, upcomingIncompleteTasks } from '@/utils/dashboardStats';
 
 export function DashboardPage() {
   const { tasks } = useTasks();
   const { decisions } = useDecisions();
+  const { households } = useHouseholds();
+  const { guests } = useGuests();
 
   const health = computePlanningHealth(tasks, decisions);
-  const attentionItems = buildAttentionItems(tasks, decisions);
+  const attentionItems = [...buildAttentionItems(tasks, decisions), ...buildGuestAttentionItems(households, guests)];
   const upcoming = upcomingIncompleteTasks(tasks, 10);
 
   return (
@@ -24,6 +29,7 @@ export function DashboardPage() {
 
       <EventCards />
       <PlanningHealthGrid health={health} />
+      <GuestSnapshot />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <AttentionRequired items={attentionItems} />

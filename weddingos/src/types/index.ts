@@ -2,4 +2,8 @@ export * from './task';
 export * from './decision';
 export * from './settings';
 export * from './owner';
+export * from './guestEvent';
+export * from './rsvp';
+export * from './household';
+export * from './guest';
 export * from './backup';
