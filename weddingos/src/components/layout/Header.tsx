@@ -1,13 +1,15 @@
-import { Heart, Plus, Search } from 'lucide-react';
+import { Heart, Plus, Radio, Search } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { getCountdown } from '@/utils/countdown';
 import { useUI } from '@/context/UIContext';
 import { APP_NAME } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/cn';
 
 export function Header() {
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const { openSearch, openQuickAdd } = useUI();
+  const weddingDayModeEnabled = settings.weddingDay.weddingDayModeEnabled;
   const engagementCountdown = getCountdown(settings.engagement.date);
   const weddingCountdown = getCountdown(settings.wedding.date);
 
@@ -26,6 +28,18 @@ export function Header() {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => updateSettings({ weddingDay: { ...settings.weddingDay, weddingDayModeEnabled: !weddingDayModeEnabled } })}
+          aria-pressed={weddingDayModeEnabled}
+          className={cn(
+            'hidden sm:flex h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium',
+            weddingDayModeEnabled ? 'border-brand-700 bg-brand-50 text-brand-800' : 'border-line text-ink-faint hover:bg-surface-subtle',
+          )}
+        >
+          <Radio className="size-4" aria-hidden="true" />
+          Wedding Day Mode {weddingDayModeEnabled ? 'On' : 'Off'}
+        </button>
         <button
           type="button"
           onClick={openSearch}

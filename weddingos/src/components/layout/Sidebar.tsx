@@ -11,7 +11,7 @@ export function Sidebar() {
   const weddingCountdown = getCountdown(settings.wedding.date);
 
   return (
-    <aside className="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col border-r border-line bg-surface">
+    <aside className="no-print hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col border-r border-line bg-surface">
       <div className="flex items-center gap-2.5 px-5 py-5">
         <div className="flex size-9 items-center justify-center rounded-lg bg-brand-700 text-white">
           <Heart className="size-4.5" aria-hidden="true" />

@@ -40,6 +40,17 @@ import type { MusicAVPlan } from './musicAVPlan';
 import type { GiftPlan } from './giftPlan';
 import type { WelcomeKit } from './welcomeKit';
 import type { WelcomeKitItem } from './welcomeKitItem';
+import type { RunSheetItem } from './runSheetItem';
+import type { LiveIssue } from './liveIssue';
+import type { DutyAssignment } from './dutyAssignment';
+import type { VendorDayStatus } from './vendorDayStatus';
+import type { CeremonyItemMovement } from './ceremonyItemMovement';
+import type { EmergencyContact } from './emergencyContact';
+import type { EmergencyResponseCard } from './emergencyResponseCard';
+import type { CloseoutItem } from './closeoutItem';
+import type { FinalReadinessReview } from './finalReadinessReview';
+import type { GuestOperationalStatus } from './guestOperationalStatus';
+import type { ManifestFreezeState } from './manifestFreezeState';
 
 /**
  * Version 1: settings/tasks/decisions/owners only (Phase 1).
@@ -47,10 +58,14 @@ import type { WelcomeKitItem } from './welcomeKitItem';
  * Version 3: adds travel/accommodation/transport logistics (Phase 3).
  * Version 4: adds vendors/quotes/contracts/budget/payments/refunds (Phase 4).
  * Version 5: adds church/ceremony/catering/décor/attire/photography/music/gifts wedding-preparation records (Phase 5).
+ * Version 6: adds the wedding-day command center — run sheet, live issues,
+ * duty roster, vendor day-of status, ceremony item movements, emergency
+ * contacts/response cards, closeout checklist, final readiness reviews,
+ * guest operational statuses, manifest freeze states (Phase 6).
  * Older files still import successfully — see backupRepository.normalizeBackup
  * — with the collections introduced after their version initialized empty.
  */
-export const BACKUP_VERSION = 5;
+export const BACKUP_VERSION = 6;
 
 export interface WeddingOSBackup {
   version: number;
@@ -98,4 +113,15 @@ export interface WeddingOSBackup {
   giftPlans: GiftPlan[];
   welcomeKits: WelcomeKit[];
   welcomeKitItems: WelcomeKitItem[];
+  runSheetItems: RunSheetItem[];
+  liveIssues: LiveIssue[];
+  dutyAssignments: DutyAssignment[];
+  vendorDayStatuses: VendorDayStatus[];
+  ceremonyItemMovements: CeremonyItemMovement[];
+  emergencyContacts: EmergencyContact[];
+  emergencyResponseCards: EmergencyResponseCard[];
+  closeoutItems: CloseoutItem[];
+  finalReadinessReviews: FinalReadinessReview[];
+  guestOperationalStatuses: GuestOperationalStatus[];
+  manifestFreezeStates: ManifestFreezeState[];
 }

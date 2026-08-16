@@ -4,6 +4,7 @@ import { EventDetailsForm } from '@/features/settings/EventDetailsForm';
 import { OwnerRolesManager } from '@/features/settings/OwnerRolesManager';
 import { FinanceSettingsForm } from '@/features/settings/FinanceSettingsForm';
 import { WeddingPrepSettingsForm } from '@/features/settings/WeddingPrepSettingsForm';
+import { WeddingDaySettingsForm } from '@/features/settings/WeddingDaySettingsForm';
 import { DataManagement } from '@/features/settings/DataManagement';
 
 const TABS = [
@@ -11,6 +12,7 @@ const TABS = [
   { to: '/settings/owners', label: 'Owner Roles', end: false },
   { to: '/settings/finance', label: 'Finance', end: false },
   { to: '/settings/wedding-prep', label: 'Wedding Prep', end: false },
+  { to: '/settings/wedding-day', label: 'Wedding Day', end: false },
   { to: '/settings/data', label: 'Data Management', end: false },
 ];
 
@@ -45,6 +47,7 @@ export function SettingsPage() {
         <Route path="owners" element={<OwnerRolesManager />} />
         <Route path="finance" element={<FinanceSettingsForm />} />
         <Route path="wedding-prep" element={<WeddingPrepSettingsForm />} />
+        <Route path="wedding-day" element={<WeddingDaySettingsForm />} />
         <Route path="data" element={<DataManagement />} />
       </Routes>
     </div>

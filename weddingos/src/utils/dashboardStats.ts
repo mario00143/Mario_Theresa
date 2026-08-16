@@ -34,6 +34,7 @@ import { computeCategorySummary } from './budgetLogic';
 import { computePaymentScheduleStatus } from './paymentLogic';
 import { isCriticalVendorNotReconfirmed } from './vendorReadiness';
 import type { WeddingPrepIssue, WeddingPrepIssueCategory } from './weddingPrepDataQuality';
+import type { CommandCenterAlert } from './commandCenterLogic';
 import { daysUntil, todayISO } from './date';
 
 export interface PlanningHealth {
@@ -314,6 +315,31 @@ export function buildWeddingPrepAttentionItems(issues: WeddingPrepIssue[]): Atte
   }
 
   return items;
+}
+
+const COMMAND_CENTER_ALERT_ROUTES: Record<CommandCenterAlert['linkType'], string> = {
+  runSheetItem: '/wedding-day/run-sheet',
+  liveIssue: '/wedding-day/issues',
+  vendor: '/wedding-day/vendors',
+  route: '/logistics/transport',
+  guest: '/wedding-day/manifests',
+};
+
+/**
+ * Wedding-day Attention Required items: the full Command Center alert set,
+ * narrowed to critical-severity alerts only — the complete list (including
+ * warnings) lives on the Command Center page itself, not the main dashboard.
+ */
+export function buildWeddingDayAttentionItems(alerts: CommandCenterAlert[]): AttentionItem[] {
+  return alerts
+    .filter((a) => a.severity === 'critical')
+    .map((a) => ({
+      id: `wedding-day-${a.id}`,
+      severity: 'critical' as const,
+      message: a.message,
+      linkType: 'route' as const,
+      linkId: COMMAND_CENTER_ALERT_ROUTES[a.linkType],
+    }));
 }
 
 const VENDOR_STATUSES_EXPECTING_CONTRACT: Vendor['status'][] = ['Selected', 'Contracted', 'Confirmed', 'Completed'];

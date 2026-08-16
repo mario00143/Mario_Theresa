@@ -1,5 +1,5 @@
 import type { AppSettings } from '@/types';
-import { DEFAULT_WEDDING_PREP_SECTION_WEIGHTS } from '@/types';
+import { DEFAULT_WEDDING_DAY_SETTINGS, DEFAULT_WEDDING_PREP_SECTION_WEIGHTS } from '@/types';
 import {
   DEFAULT_BUDGET_VARIANCE_WARNING_PERCENT,
   DEFAULT_CRITICAL_VENDOR_CATEGORIES,
@@ -47,5 +47,6 @@ export function seedSettings(): AppSettings {
     weddingPrep: {
       sectionWeights: { ...DEFAULT_WEDDING_PREP_SECTION_WEIGHTS },
     },
+    weddingDay: { ...DEFAULT_WEDDING_DAY_SETTINGS },
   };
 }

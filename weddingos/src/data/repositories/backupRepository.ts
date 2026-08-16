@@ -6,21 +6,30 @@ import type {
   BudgetItem,
   CateringPlan,
   CeremonyItem,
+  CeremonyItemMovement,
   CeremonyParticipant,
   CeremonySequenceItem,
   ChurchProfile,
   ChurchRequirement,
+  CloseoutItem,
   Contract,
   Decision,
   DecorDeliverable,
   DecorPlan,
   Driver,
+  DutyAssignment,
+  EmergencyContact,
+  EmergencyResponseCard,
+  FinalReadinessReview,
   GiftPlan,
   GroomingAppointment,
   Guest,
   GuestEvent,
+  GuestOperationalStatus,
   Hotel,
   Household,
+  LiveIssue,
+  ManifestFreezeState,
   MenuItem,
   MusicAVPlan,
   MusicCue,
@@ -33,6 +42,7 @@ import type {
   Room,
   RoomAssignment,
   RoomType,
+  RunSheetItem,
   Task,
   TransportAssignment,
   TransportRoute,
@@ -40,6 +50,7 @@ import type {
   Vehicle,
   Vendor,
   VendorContact,
+  VendorDayStatus,
   VendorQuote,
   WeddingOSBackup,
   WelcomeKit,
@@ -56,6 +67,7 @@ import {
   CATERING_SERVICE_STYLES,
   CEREMONY_ITEM_APPLICABILITY,
   CEREMONY_ITEM_CATEGORIES,
+  CEREMONY_ITEM_MOVEMENT_ACTIONS,
   CEREMONY_ITEM_STATUSES,
   CEREMONY_ITEM_VERIFICATION_STATUSES,
   CEREMONY_PARTICIPANT_ROLES,
@@ -63,6 +75,8 @@ import {
   CHURCH_APPLICABILITY,
   CHURCH_REQUIREMENT_CATEGORIES,
   CHURCH_REQUIREMENT_STATUSES,
+  CLOSEOUT_CATEGORIES,
+  CLOSEOUT_STATUSES,
   CONTRACT_STATUSES,
   DECOR_AREAS,
   DECOR_APPROVAL_STATUSES,
@@ -70,13 +84,23 @@ import {
   DENOMINATIONS,
   DECISION_STATUSES,
   DIETARY_PREFERENCES,
+  DUTY_ROLES,
+  DUTY_STATUSES,
+  EMERGENCY_CONTACT_CATEGORIES,
+  EMERGENCY_CONTACT_PRIORITIES,
+  EMERGENCY_RESPONSE_CARD_TYPES,
   EVENTS,
   GIFT_RECIPIENT_TYPES,
   GIFT_STATUSES,
   GROOMING_STATUSES,
   GROOMING_TYPES,
+  GUEST_OPERATIONAL_STATES,
   HOUSEHOLD_SIDES,
   INVITATION_STATUSES,
+  LIVE_ISSUE_CATEGORIES,
+  LIVE_ISSUE_SEVERITIES,
+  LIVE_ISSUE_STATUSES,
+  MANIFEST_TYPES,
   MENU_COURSES,
   MENU_DIETARY_TYPES,
   MUSIC_CUE_TYPES,
@@ -92,6 +116,9 @@ import {
   ROOM_STATUSES,
   ROUTE_STATUSES,
   ROUTE_TYPES,
+  RUN_SHEET_CATEGORIES,
+  RUN_SHEET_RELATIVE_REFERENCES,
+  RUN_SHEET_STATUSES,
   TASK_STATUSES,
   TRANSPORT_ASSIGNMENT_STATUSES,
   TRAVEL_BOOKING_STATUSES,
@@ -99,8 +126,10 @@ import {
   TRAVEL_MODES,
   VEHICLE_STATUSES,
   VEHICLE_TYPES,
+  VENDOR_DAY_STATUSES,
   VENDOR_STATUSES,
   WELCOME_KIT_STATUSES,
+  DEFAULT_WEDDING_DAY_SETTINGS,
   DEFAULT_WEDDING_PREP_SECTION_WEIGHTS,
 } from '@/types';
 import { DEFAULT_BUDGET_VARIANCE_WARNING_PERCENT, DEFAULT_CRITICAL_VENDOR_CATEGORIES, DEFAULT_CURRENCY, DEFAULT_LARGE_CASH_WARNING_THRESHOLD } from '@/lib/constants';
@@ -110,21 +139,30 @@ import {
   budgetCategoriesStore,
   budgetItemsStore,
   cateringPlansStore,
+  ceremonyItemMovementsStore,
   ceremonyItemsStore,
   ceremonyParticipantsStore,
   ceremonySequenceItemsStore,
   churchProfilesStore,
   churchRequirementsStore,
+  closeoutItemsStore,
   contractsStore,
   decisionsStore,
   decorDeliverablesStore,
   decorPlansStore,
   driversStore,
+  dutyAssignmentsStore,
+  emergencyContactsStore,
+  emergencyResponseCardsStore,
+  finalReadinessReviewsStore,
   giftPlansStore,
   groomingAppointmentsStore,
+  guestOperationalStatusesStore,
   guestsStore,
   hotelsStore,
   householdsStore,
+  liveIssuesStore,
+  manifestFreezeStatesStore,
   menuItemsStore,
   musicAVPlansStore,
   musicCuesStore,
@@ -137,6 +175,7 @@ import {
   roomAssignmentsStore,
   roomTypesStore,
   roomsStore,
+  runSheetItemsStore,
   settingsStore,
   tasksStore,
   transportAssignmentsStore,
@@ -144,6 +183,7 @@ import {
   travelSegmentsStore,
   vehiclesStore,
   vendorContactsStore,
+  vendorDayStatusesStore,
   vendorQuotesStore,
   vendorsStore,
   welcomeKitItemsStore,
@@ -197,6 +237,17 @@ export function exportBackup(): WeddingOSBackup {
     giftPlans: giftPlansStore.get(),
     welcomeKits: welcomeKitsStore.get(),
     welcomeKitItems: welcomeKitItemsStore.get(),
+    runSheetItems: runSheetItemsStore.get(),
+    liveIssues: liveIssuesStore.get(),
+    dutyAssignments: dutyAssignmentsStore.get(),
+    vendorDayStatuses: vendorDayStatusesStore.get(),
+    ceremonyItemMovements: ceremonyItemMovementsStore.get(),
+    emergencyContacts: emergencyContactsStore.get(),
+    emergencyResponseCards: emergencyResponseCardsStore.get(),
+    closeoutItems: closeoutItemsStore.get(),
+    finalReadinessReviews: finalReadinessReviewsStore.get(),
+    guestOperationalStatuses: guestOperationalStatusesStore.get(),
+    manifestFreezeStates: manifestFreezeStatesStore.get(),
   };
 }
 
@@ -557,13 +608,109 @@ function isValidWelcomeKitItem(value: unknown): value is WelcomeKitItem {
   return true;
 }
 
+function isValidRunSheetItem(value: unknown): value is RunSheetItem {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.activity !== 'string' || typeof value.date !== 'string') return false;
+  if (!EVENTS.includes(value.event as (typeof EVENTS)[number])) return false;
+  if (!RUN_SHEET_RELATIVE_REFERENCES.includes(value.relativeReference as (typeof RUN_SHEET_RELATIVE_REFERENCES)[number])) return false;
+  if (!RUN_SHEET_CATEGORIES.includes(value.category as (typeof RUN_SHEET_CATEGORIES)[number])) return false;
+  if (!RUN_SHEET_STATUSES.includes(value.status as (typeof RUN_SHEET_STATUSES)[number])) return false;
+  if (!Array.isArray(value.participantIds) || !Array.isArray(value.vendorIds) || !Array.isArray(value.requiredItemIds)) return false;
+  if (!Array.isArray(value.relatedTaskIds) || !Array.isArray(value.relatedTransportRouteIds) || !Array.isArray(value.dependencyIds)) return false;
+  return true;
+}
+
+function isValidLiveIssue(value: unknown): value is LiveIssue {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.title !== 'string' || typeof value.reportedAt !== 'string') return false;
+  if (!LIVE_ISSUE_CATEGORIES.includes(value.category as (typeof LIVE_ISSUE_CATEGORIES)[number])) return false;
+  if (!LIVE_ISSUE_SEVERITIES.includes(value.severity as (typeof LIVE_ISSUE_SEVERITIES)[number])) return false;
+  if (!LIVE_ISSUE_STATUSES.includes(value.status as (typeof LIVE_ISSUE_STATUSES)[number])) return false;
+  if (typeof value.followUpRequired !== 'boolean') return false;
+  return true;
+}
+
+function isValidDutyAssignment(value: unknown): value is DutyAssignment {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.personName !== 'string') return false;
+  if (!DUTY_ROLES.includes(value.role as (typeof DUTY_ROLES)[number])) return false;
+  if (!DUTY_STATUSES.includes(value.status as (typeof DUTY_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidVendorDayStatus(value: unknown): value is VendorDayStatus {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.vendorId !== 'string') return false;
+  if (!VENDOR_DAY_STATUSES.includes(value.status as (typeof VENDOR_DAY_STATUSES)[number])) return false;
+  if (typeof value.primaryContactConfirmed !== 'boolean' || typeof value.setupComplete !== 'boolean') return false;
+  if (typeof value.serviceReady !== 'boolean' || typeof value.finalSettlementChecked !== 'boolean') return false;
+  return true;
+}
+
+function isValidCeremonyItemMovement(value: unknown): value is CeremonyItemMovement {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.ceremonyItemId !== 'string' || typeof value.timestamp !== 'string') return false;
+  if (!CEREMONY_ITEM_MOVEMENT_ACTIONS.includes(value.action as (typeof CEREMONY_ITEM_MOVEMENT_ACTIONS)[number])) return false;
+  return true;
+}
+
+function isValidEmergencyContact(value: unknown): value is EmergencyContact {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.name !== 'string' || typeof value.phone !== 'string') return false;
+  if (!EMERGENCY_CONTACT_CATEGORIES.includes(value.category as (typeof EMERGENCY_CONTACT_CATEGORIES)[number])) return false;
+  if (!EMERGENCY_CONTACT_PRIORITIES.includes(value.priority as (typeof EMERGENCY_CONTACT_PRIORITIES)[number])) return false;
+  return true;
+}
+
+function isValidEmergencyResponseCard(value: unknown): value is EmergencyResponseCard {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.title !== 'string') return false;
+  if (!EMERGENCY_RESPONSE_CARD_TYPES.includes(value.type as (typeof EMERGENCY_RESPONSE_CARD_TYPES)[number])) return false;
+  if (!Array.isArray(value.immediateActions)) return false;
+  return true;
+}
+
+function isValidCloseoutItem(value: unknown): value is CloseoutItem {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.title !== 'string') return false;
+  if (!CLOSEOUT_CATEGORIES.includes(value.category as (typeof CLOSEOUT_CATEGORIES)[number])) return false;
+  if (!CLOSEOUT_STATUSES.includes(value.status as (typeof CLOSEOUT_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidFinalReadinessReview(value: unknown): value is FinalReadinessReview {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.reviewedAt !== 'string' || typeof value.reviewedBy !== 'string') return false;
+  if (!Array.isArray(value.readinessSnapshot) || !Array.isArray(value.unresolvedExceptions)) return false;
+  return true;
+}
+
+function isValidGuestOperationalStatus(value: unknown): value is GuestOperationalStatus {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.guestId !== 'string' || typeof value.lastUpdatedAt !== 'string') return false;
+  if (!GUEST_OPERATIONAL_STATES.includes(value.state as (typeof GUEST_OPERATIONAL_STATES)[number])) return false;
+  if (typeof value.isVip !== 'boolean') return false;
+  return true;
+}
+
+function isValidManifestFreezeState(value: unknown): value is ManifestFreezeState {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.frozen !== 'boolean') return false;
+  if (!MANIFEST_TYPES.includes(value.manifestType as (typeof MANIFEST_TYPES)[number])) return false;
+  return true;
+}
+
 /**
  * Accepts version 1 (Phase 1: settings/tasks/decisions/owners only),
  * version 2 (Phase 2: adds households/guests), version 3 (Phase 3: adds
  * travel/accommodation/transport logistics), version 4 (Phase 4: adds
  * vendors/quotes/contracts/budget/payments/refunds), and version 5
  * (Phase 5: adds church/ceremony/catering/décor/attire/photography/music/
- * gifts wedding-preparation records). Collections introduced after a
+ * gifts wedding-preparation records), and version 6 (Phase 6: adds the
+ * wedding-day command center — run sheet, live issues, duty roster, vendor
+ * day-of status, ceremony item movements, emergency contacts/response
+ * cards, closeout checklist, final readiness reviews, guest operational
+ * statuses, manifest freeze states). Collections introduced after a
  * file's version are optional in that file and are initialized to empty
  * arrays on import (see normalizeBackup).
  */
@@ -670,10 +817,30 @@ export function validateBackup(data: unknown): BackupValidationResult {
     }
   }
 
+  const isV6OrLater = version !== null && version >= 6;
+  const weddingDayFields: Array<[key: string, validator: (v: unknown) => boolean, label: string]> = [
+    ['runSheetItems', (v) => Array.isArray(v) && v.every(isValidRunSheetItem), 'Run sheet items'],
+    ['liveIssues', (v) => Array.isArray(v) && v.every(isValidLiveIssue), 'Live issues'],
+    ['dutyAssignments', (v) => Array.isArray(v) && v.every(isValidDutyAssignment), 'Duty assignments'],
+    ['vendorDayStatuses', (v) => Array.isArray(v) && v.every(isValidVendorDayStatus), 'Vendor day statuses'],
+    ['ceremonyItemMovements', (v) => Array.isArray(v) && v.every(isValidCeremonyItemMovement), 'Ceremony item movements'],
+    ['emergencyContacts', (v) => Array.isArray(v) && v.every(isValidEmergencyContact), 'Emergency contacts'],
+    ['emergencyResponseCards', (v) => Array.isArray(v) && v.every(isValidEmergencyResponseCard), 'Emergency response cards'],
+    ['closeoutItems', (v) => Array.isArray(v) && v.every(isValidCloseoutItem), 'Closeout items'],
+    ['finalReadinessReviews', (v) => Array.isArray(v) && v.every(isValidFinalReadinessReview), 'Final readiness reviews'],
+    ['guestOperationalStatuses', (v) => Array.isArray(v) && v.every(isValidGuestOperationalStatus), 'Guest operational statuses'],
+    ['manifestFreezeStates', (v) => Array.isArray(v) && v.every(isValidManifestFreezeState), 'Manifest freeze states'],
+  ];
+  for (const [key, validator, label] of weddingDayFields) {
+    if ((isV6OrLater || data[key] !== undefined) && !validator(data[key])) {
+      errors.push(`${label} section is missing or contains malformed entries.`);
+    }
+  }
+
   return { valid: errors.length === 0, errors };
 }
 
-/** Backfills settings sub-objects introduced in later versions (finance in v4, weddingPrep in v5) for older backups. */
+/** Backfills settings sub-objects introduced in later versions (finance in v4, weddingPrep in v5, weddingDay in v6) for older backups. */
 function normalizeSettings(rawSettings: unknown): AppSettings {
   const settings = rawSettings as AppSettings;
   return {
@@ -687,6 +854,7 @@ function normalizeSettings(rawSettings: unknown): AppSettings {
     weddingPrep: settings.weddingPrep ?? {
       sectionWeights: { ...DEFAULT_WEDDING_PREP_SECTION_WEIGHTS },
     },
+    weddingDay: settings.weddingDay ?? { ...DEFAULT_WEDDING_DAY_SETTINGS },
   };
 }
 
@@ -743,6 +911,17 @@ export function normalizeBackup(data: unknown): WeddingOSBackup {
     giftPlans: Array.isArray(raw.giftPlans) ? (raw.giftPlans as GiftPlan[]) : [],
     welcomeKits: Array.isArray(raw.welcomeKits) ? (raw.welcomeKits as WelcomeKit[]) : [],
     welcomeKitItems: Array.isArray(raw.welcomeKitItems) ? (raw.welcomeKitItems as WelcomeKitItem[]) : [],
+    runSheetItems: Array.isArray(raw.runSheetItems) ? (raw.runSheetItems as RunSheetItem[]) : [],
+    liveIssues: Array.isArray(raw.liveIssues) ? (raw.liveIssues as LiveIssue[]) : [],
+    dutyAssignments: Array.isArray(raw.dutyAssignments) ? (raw.dutyAssignments as DutyAssignment[]) : [],
+    vendorDayStatuses: Array.isArray(raw.vendorDayStatuses) ? (raw.vendorDayStatuses as VendorDayStatus[]) : [],
+    ceremonyItemMovements: Array.isArray(raw.ceremonyItemMovements) ? (raw.ceremonyItemMovements as CeremonyItemMovement[]) : [],
+    emergencyContacts: Array.isArray(raw.emergencyContacts) ? (raw.emergencyContacts as EmergencyContact[]) : [],
+    emergencyResponseCards: Array.isArray(raw.emergencyResponseCards) ? (raw.emergencyResponseCards as EmergencyResponseCard[]) : [],
+    closeoutItems: Array.isArray(raw.closeoutItems) ? (raw.closeoutItems as CloseoutItem[]) : [],
+    finalReadinessReviews: Array.isArray(raw.finalReadinessReviews) ? (raw.finalReadinessReviews as FinalReadinessReview[]) : [],
+    guestOperationalStatuses: Array.isArray(raw.guestOperationalStatuses) ? (raw.guestOperationalStatuses as GuestOperationalStatus[]) : [],
+    manifestFreezeStates: Array.isArray(raw.manifestFreezeStates) ? (raw.manifestFreezeStates as ManifestFreezeState[]) : [],
   };
 }
 
@@ -791,6 +970,17 @@ export function importBackup(backup: WeddingOSBackup): void {
   giftPlansStore.set(backup.giftPlans ?? []);
   welcomeKitsStore.set(backup.welcomeKits ?? []);
   welcomeKitItemsStore.set(backup.welcomeKitItems ?? []);
+  runSheetItemsStore.set(backup.runSheetItems ?? []);
+  liveIssuesStore.set(backup.liveIssues ?? []);
+  dutyAssignmentsStore.set(backup.dutyAssignments ?? []);
+  vendorDayStatusesStore.set(backup.vendorDayStatuses ?? []);
+  ceremonyItemMovementsStore.set(backup.ceremonyItemMovements ?? []);
+  emergencyContactsStore.set(backup.emergencyContacts ?? []);
+  emergencyResponseCardsStore.set(backup.emergencyResponseCards ?? []);
+  closeoutItemsStore.set(backup.closeoutItems ?? []);
+  finalReadinessReviewsStore.set(backup.finalReadinessReviews ?? []);
+  guestOperationalStatusesStore.set(backup.guestOperationalStatuses ?? []);
+  manifestFreezeStatesStore.set(backup.manifestFreezeStates ?? []);
 }
 
 function csvEscape(value: string | number | undefined | null): string {

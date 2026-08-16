@@ -1,6 +1,6 @@
 import type { CeremonyItem } from '@/types';
 import { generateId } from '@/lib/id';
-import { ceremonyItemsStore, ceremonySequenceItemsStore } from '../stores';
+import { ceremonyItemMovementsStore, ceremonyItemsStore, ceremonySequenceItemsStore, runSheetItemsStore } from '../stores';
 
 export type NewCeremonyItemInput = Omit<CeremonyItem, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -19,12 +19,21 @@ export function updateCeremonyItem(id: string, patch: Partial<Omit<CeremonyItem,
   ceremonyItemsStore.set((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch, updatedAt: nowISO() } : i)));
 }
 
-/** Deletes a ceremony item and removes it from any sequence item's required-items list. */
+/**
+ * Deletes a ceremony item, removes it from any sequence item's
+ * required-items list and any run-sheet item's requiredItemIds, and
+ * cascades to its day-of movement history (Phase 6) since a movement
+ * record is meaningless without the item it tracks.
+ */
 export function deleteCeremonyItem(id: string): void {
   ceremonyItemsStore.set((prev) => prev.filter((i) => i.id !== id));
   ceremonySequenceItemsStore.set((prev) =>
     prev.map((s) => (s.requiredItems.includes(id) ? { ...s, requiredItems: s.requiredItems.filter((r) => r !== id), updatedAt: nowISO() } : s)),
   );
+  runSheetItemsStore.set((prev) =>
+    prev.map((r) => (r.requiredItemIds.includes(id) ? { ...r, requiredItemIds: r.requiredItemIds.filter((i) => i !== id), updatedAt: nowISO() } : r)),
+  );
+  ceremonyItemMovementsStore.set((prev) => prev.filter((m) => m.ceremonyItemId !== id));
 }
 
 /** Marks an item verified (section 10/11's custody verification workflow). */

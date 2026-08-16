@@ -4,18 +4,23 @@ import type {
   CeremonyItem,
   CeremonyParticipant,
   ChurchRequirement,
+  CloseoutItem,
   Contract,
   Decision,
   DecorPlan,
   Driver,
+  DutyAssignment,
+  EmergencyContact,
   GiftPlan,
   Guest,
   Hotel,
   Household,
+  LiveIssue,
   MusicCue,
   Payment,
   PhotoGroup,
   Room,
+  RunSheetItem,
   Task,
   TransportRoute,
   TravelSegment,
@@ -51,6 +56,11 @@ export interface SearchResults {
   musicCues: MusicCue[];
   giftPlans: GiftPlan[];
   welcomeKits: WelcomeKit[];
+  runSheetItems: RunSheetItem[];
+  liveIssues: LiveIssue[];
+  dutyAssignments: DutyAssignment[];
+  emergencyContacts: EmergencyContact[];
+  closeoutItems: CloseoutItem[];
 }
 
 function matches(haystack: (string | undefined)[], query: string): boolean {
@@ -84,6 +94,11 @@ export function searchAll(
   musicCues: MusicCue[],
   giftPlans: GiftPlan[],
   welcomeKits: WelcomeKit[],
+  runSheetItems: RunSheetItem[],
+  liveIssues: LiveIssue[],
+  dutyAssignments: DutyAssignment[],
+  emergencyContacts: EmergencyContact[],
+  closeoutItems: CloseoutItem[],
   query: string,
 ): SearchResults {
   const trimmed = query.trim();
@@ -92,6 +107,7 @@ export function searchAll(
       tasks: [], decisions: [], households: [], guests: [], travelSegments: [], hotels: [], rooms: [], vehicles: [], drivers: [], routes: [],
       vendors: [], vendorQuotes: [], contracts: [], budgetItems: [], payments: [],
       churchRequirements: [], ceremonyParticipants: [], ceremonyItems: [], decorPlans: [], attireProfiles: [], photoGroups: [], musicCues: [], giftPlans: [], welcomeKits: [],
+      runSheetItems: [], liveIssues: [], dutyAssignments: [], emergencyContacts: [], closeoutItems: [],
     };
   }
 
@@ -140,6 +156,12 @@ export function searchAll(
   const matchedGiftPlans = giftPlans.filter((p) => matches([p.recipientName, p.giftType], trimmed));
   const matchedWelcomeKits = welcomeKits.filter((k) => matches([k.name], trimmed));
 
+  const matchedRunSheetItems = runSheetItems.filter((i) => matches([i.activity, i.location, i.owner, i.cue], trimmed));
+  const matchedLiveIssues = liveIssues.filter((i) => matches([i.title, i.description, i.owner, i.location], trimmed));
+  const matchedDutyAssignments = dutyAssignments.filter((d) => matches([d.role, d.personName, d.phone, d.location], trimmed));
+  const matchedEmergencyContacts = emergencyContacts.filter((c) => matches([c.name, c.category, c.phone, c.location], trimmed));
+  const matchedCloseoutItems = closeoutItems.filter((c) => matches([c.title, c.category, c.owner], trimmed));
+
   return {
     tasks: matchedTasks.slice(0, 20),
     decisions: matchedDecisions.slice(0, 20),
@@ -165,5 +187,10 @@ export function searchAll(
     musicCues: matchedMusicCues.slice(0, 20),
     giftPlans: matchedGiftPlans.slice(0, 20),
     welcomeKits: matchedWelcomeKits.slice(0, 20),
+    runSheetItems: matchedRunSheetItems.slice(0, 20),
+    liveIssues: matchedLiveIssues.slice(0, 20),
+    dutyAssignments: matchedDutyAssignments.slice(0, 20),
+    emergencyContacts: matchedEmergencyContacts.slice(0, 20),
+    closeoutItems: matchedCloseoutItems.slice(0, 20),
   };
 }

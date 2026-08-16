@@ -20,6 +20,9 @@ import { useChurchProfiles } from '@/hooks/useChurchProfiles';
 import { useChurchRequirements } from '@/hooks/useChurchRequirements';
 import { useCeremonyItems } from '@/hooks/useCeremonyItems';
 import { useGiftPlans } from '@/hooks/useGiftPlans';
+import { useRunSheet } from '@/hooks/useRunSheet';
+import { useLiveIssues } from '@/hooks/useLiveIssues';
+import { useDutyAssignments } from '@/hooks/useDutyAssignments';
 import { InvalidPaymentAmountError, PaymentLinkedEntityNotFoundError } from '@/data/repositories/paymentRepository';
 import { todayISO } from '@/utils/date';
 import {
@@ -33,6 +36,10 @@ import {
   CHURCH_REQUIREMENT_CATEGORIES,
   CEREMONY_ITEM_CATEGORIES,
   GIFT_RECIPIENT_TYPES,
+  RUN_SHEET_CATEGORIES,
+  LIVE_ISSUE_CATEGORIES,
+  LIVE_ISSUE_SEVERITIES,
+  DUTY_ROLES,
   type TravelDirection,
   type RouteType,
   type VendorCategory,
@@ -40,6 +47,10 @@ import {
   type ChurchRequirementCategory,
   type CeremonyItemCategory,
   type GiftRecipientType,
+  type RunSheetCategory,
+  type LiveIssueCategory,
+  type LiveIssueSeverity,
+  type DutyRole,
 } from '@/types';
 
 const MODE_LABELS: Record<QuickAddMode, string> = {
@@ -56,6 +67,9 @@ const MODE_LABELS: Record<QuickAddMode, string> = {
   churchRequirement: 'New Church Requirement',
   ceremonyItem: 'New Ceremony Item',
   giftPlan: 'New Gift Plan',
+  runSheetItem: 'New Run Sheet Item',
+  liveIssue: 'New Live Issue',
+  dutyAssignment: 'New Duty Assignment',
 };
 
 export function QuickAddModal() {
@@ -88,6 +102,9 @@ export function QuickAddModal() {
   const { addChurchRequirement } = useChurchRequirements();
   const { addCeremonyItem } = useCeremonyItems();
   const { addGiftPlan } = useGiftPlans();
+  const { addRunSheetItem } = useRunSheet();
+  const { addLiveIssue } = useLiveIssues();
+  const { addDutyAssignment } = useDutyAssignments();
 
   const [mode, setMode] = useState<QuickAddMode>(quickAddMode);
 
@@ -154,6 +171,21 @@ export function QuickAddModal() {
   const [giftPlanRecipientType, setGiftPlanRecipientType] = useState<GiftRecipientType>(GIFT_RECIPIENT_TYPES[0]);
   const [giftPlanGiftType, setGiftPlanGiftType] = useState('');
 
+  // Run sheet item fields
+  const [runSheetActivity, setRunSheetActivity] = useState('');
+  const [runSheetCategory, setRunSheetCategory] = useState<RunSheetCategory>(RUN_SHEET_CATEGORIES[0]);
+
+  // Live issue fields
+  const [liveIssueTitle, setLiveIssueTitle] = useState('');
+  const [liveIssueSeverity, setLiveIssueSeverity] = useState<LiveIssueSeverity>('Medium');
+  const [liveIssueCategory, setLiveIssueCategory] = useState<LiveIssueCategory>(LIVE_ISSUE_CATEGORIES[0]);
+  const [liveIssueOwner, setLiveIssueOwner] = useState('');
+  const [liveIssueLocation, setLiveIssueLocation] = useState('');
+
+  // Duty assignment fields
+  const [dutyRole, setDutyRole] = useState<DutyRole>(DUTY_ROLES[0]);
+  const [dutyPersonName, setDutyPersonName] = useState('');
+
   const resetAndClose = () => {
     setTitle('');
     setOwner('');
@@ -194,6 +226,15 @@ export function QuickAddModal() {
     setCeremonyItemCategory(CEREMONY_ITEM_CATEGORIES[0]);
     setGiftPlanRecipientType(GIFT_RECIPIENT_TYPES[0]);
     setGiftPlanGiftType('');
+    setRunSheetActivity('');
+    setRunSheetCategory(RUN_SHEET_CATEGORIES[0]);
+    setLiveIssueTitle('');
+    setLiveIssueSeverity('Medium');
+    setLiveIssueCategory(LIVE_ISSUE_CATEGORIES[0]);
+    setLiveIssueOwner('');
+    setLiveIssueLocation('');
+    setDutyRole(DUTY_ROLES[0]);
+    setDutyPersonName('');
     closeQuickAdd();
   };
 
@@ -214,7 +255,10 @@ export function QuickAddModal() {
     (mode === 'payment' && paymentVendorId.length > 0 && Number(paymentAmount) > 0 && paymentDate.trim().length > 0) ||
     (mode === 'churchRequirement' && churchRequirementTitle.trim().length > 0 && churchProfiles.length > 0) ||
     (mode === 'ceremonyItem' && ceremonyItemName.trim().length > 0) ||
-    (mode === 'giftPlan' && giftPlanGiftType.trim().length > 0);
+    (mode === 'giftPlan' && giftPlanGiftType.trim().length > 0) ||
+    (mode === 'runSheetItem' && runSheetActivity.trim().length > 0) ||
+    (mode === 'liveIssue' && liveIssueTitle.trim().length > 0) ||
+    (mode === 'dutyAssignment' && dutyPersonName.trim().length > 0);
 
   const handleSubmit = () => {
     if (mode === 'task') {
@@ -398,6 +442,41 @@ export function QuickAddModal() {
       });
       resetAndClose();
       navigate('/wedding-prep/gifts-kits');
+    } else if (mode === 'runSheetItem') {
+      if (!runSheetActivity.trim()) return;
+      addRunSheetItem({
+        event: 'Wedding',
+        date: settings.wedding.date,
+        relativeReference: 'None',
+        activity: runSheetActivity.trim(),
+        category: runSheetCategory,
+        status: 'Planned',
+      });
+      resetAndClose();
+      navigate('/wedding-day/run-sheet');
+    } else if (mode === 'liveIssue') {
+      if (!liveIssueTitle.trim()) return;
+      addLiveIssue({
+        title: liveIssueTitle.trim(),
+        category: liveIssueCategory,
+        severity: liveIssueSeverity,
+        status: 'Open',
+        reportedAt: new Date().toISOString(),
+        owner: liveIssueOwner.trim() || undefined,
+        location: liveIssueLocation.trim() || undefined,
+        followUpRequired: false,
+      });
+      resetAndClose();
+      navigate('/wedding-day/issues');
+    } else if (mode === 'dutyAssignment') {
+      if (!dutyPersonName.trim()) return;
+      addDutyAssignment({
+        role: dutyRole,
+        personName: dutyPersonName.trim(),
+        status: 'Planned',
+      });
+      resetAndClose();
+      navigate('/wedding-day/duties');
     }
   };
 
@@ -839,6 +918,90 @@ export function QuickAddModal() {
             <Input id="quick-add-gift-type" value={giftPlanGiftType} onChange={(e) => setGiftPlanGiftType(e.target.value)} placeholder="e.g. Silver photo frame" autoFocus />
           </Field>
           <p className="text-xs text-ink-faint">Starts as Planned with quantity 1. You can edit quantity, custodian, and distribution owner right after creating this gift plan.</p>
+        </div>
+      )}
+
+      {mode === 'runSheetItem' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-run-sheet-activity" required>
+              Activity
+            </Label>
+            <Input id="quick-add-run-sheet-activity" value={runSheetActivity} onChange={(e) => setRunSheetActivity(e.target.value)} placeholder="e.g. Bridal party photos" autoFocus />
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-run-sheet-category">Category</Label>
+            <Select id="quick-add-run-sheet-category" value={runSheetCategory} onChange={(e) => setRunSheetCategory(e.target.value as RunSheetCategory)}>
+              {RUN_SHEET_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <p className="text-xs text-ink-faint">Starts as Planned with no fixed time. You can set the time, owner, and links right after creating this item.</p>
+        </div>
+      )}
+
+      {mode === 'liveIssue' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-live-issue-title" required>
+              Title
+            </Label>
+            <Input id="quick-add-live-issue-title" value={liveIssueTitle} onChange={(e) => setLiveIssueTitle(e.target.value)} placeholder="e.g. Sound system feedback at podium" autoFocus />
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-live-issue-severity">Severity</Label>
+            <Select id="quick-add-live-issue-severity" value={liveIssueSeverity} onChange={(e) => setLiveIssueSeverity(e.target.value as LiveIssueSeverity)}>
+              {LIVE_ISSUE_SEVERITIES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-live-issue-category">Category</Label>
+            <Select id="quick-add-live-issue-category" value={liveIssueCategory} onChange={(e) => setLiveIssueCategory(e.target.value as LiveIssueCategory)}>
+              {LIVE_ISSUE_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-live-issue-owner">Owner</Label>
+            <Input id="quick-add-live-issue-owner" value={liveIssueOwner} onChange={(e) => setLiveIssueOwner(e.target.value)} placeholder="Optional" />
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-live-issue-location">Location</Label>
+            <Input id="quick-add-live-issue-location" value={liveIssueLocation} onChange={(e) => setLiveIssueLocation(e.target.value)} placeholder="Optional" />
+          </Field>
+          <p className="text-xs text-ink-faint">Starts as Open. You can add mitigation notes, escalate severity, or resolve it right after creating this issue.</p>
+        </div>
+      )}
+
+      {mode === 'dutyAssignment' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-duty-role">Role</Label>
+            <Select id="quick-add-duty-role" value={dutyRole} onChange={(e) => setDutyRole(e.target.value as DutyRole)}>
+              {DUTY_ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-duty-person-name" required>
+              Person name
+            </Label>
+            <Input id="quick-add-duty-person-name" value={dutyPersonName} onChange={(e) => setDutyPersonName(e.target.value)} placeholder="e.g. Nikhil Thomas" autoFocus />
+          </Field>
+          <p className="text-xs text-ink-faint">Starts as Planned. You can add phone, backup, shift times, and location right after creating this duty.</p>
         </div>
       )}
     </Modal>

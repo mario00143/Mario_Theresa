@@ -34,6 +34,11 @@ import { usePhotoGroups } from '@/hooks/usePhotoGroups';
 import { useMusicCues } from '@/hooks/useMusicCues';
 import { useGiftPlans } from '@/hooks/useGiftPlans';
 import { useWelcomeKits } from '@/hooks/useWelcomeKits';
+import { useRunSheet } from '@/hooks/useRunSheet';
+import { useLiveIssues } from '@/hooks/useLiveIssues';
+import { useDutyAssignments } from '@/hooks/useDutyAssignments';
+import { useEmergencyContacts } from '@/hooks/useEmergencyContacts';
+import { useCloseoutItems } from '@/hooks/useCloseoutItems';
 import { searchAll } from '@/utils/search';
 import { formatDisplayDate } from '@/utils/date';
 import { formatCurrency } from '@/utils/currency';
@@ -66,6 +71,11 @@ export function GlobalSearchModal() {
   const { musicCues } = useMusicCues();
   const { giftPlans } = useGiftPlans();
   const { welcomeKits } = useWelcomeKits();
+  const { runSheetItems } = useRunSheet();
+  const { liveIssues } = useLiveIssues();
+  const { dutyAssignments } = useDutyAssignments();
+  const { emergencyContacts } = useEmergencyContacts();
+  const { closeoutItems } = useCloseoutItems();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -81,6 +91,7 @@ export function GlobalSearchModal() {
     tasks, decisions, households, guests, travelSegments, hotels, rooms, vehicles, drivers, routes,
     vendors, vendorContacts, vendorQuotes, contracts, budgetItems, payments,
     churchRequirements, ceremonyParticipants, ceremonyItems, decorPlans, attireProfiles, photoGroups, musicCues, giftPlans, welcomeKits,
+    runSheetItems, liveIssues, dutyAssignments, emergencyContacts, closeoutItems,
     query,
   );
   const hasQuery = query.trim().length > 0;
@@ -94,6 +105,8 @@ export function GlobalSearchModal() {
     results.musicCues.length +
     results.giftPlans.length +
     results.welcomeKits.length;
+  const weddingDayCount =
+    results.runSheetItems.length + results.liveIssues.length + results.dutyAssignments.length + results.emergencyContacts.length + results.closeoutItems.length;
   const hasResults =
     results.tasks.length > 0 ||
     results.decisions.length > 0 ||
@@ -110,7 +123,8 @@ export function GlobalSearchModal() {
     results.contracts.length > 0 ||
     results.budgetItems.length > 0 ||
     results.payments.length > 0 ||
-    weddingPrepCount > 0;
+    weddingPrepCount > 0 ||
+    weddingDayCount > 0;
   const householdById = new Map(households.map((h) => [h.id, h]));
   const guestById = new Map(guests.map((g) => [g.id, g]));
   const hotelById = new Map(hotels.map((h) => [h.id, h]));
@@ -657,6 +671,103 @@ export function GlobalSearchModal() {
                     <p className="text-sm font-medium text-ink truncate">{k.name}</p>
                     <Badge tone="neutral">Welcome kit</Badge>
                   </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {hasQuery && weddingDayCount > 0 && (
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">Wedding Day ({weddingDayCount})</p>
+          <ul className="space-y-1">
+            {results.runSheetItems.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-day/run-sheet');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{item.activity}</p>
+                    <Badge tone="neutral">Run sheet</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">{item.category} · {item.status}</p>
+                </button>
+              </li>
+            ))}
+            {results.liveIssues.map((issue) => (
+              <li key={issue.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-day/issues');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{issue.title}</p>
+                    <Badge tone="neutral">{issue.severity} issue</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">{issue.category} · {issue.status}</p>
+                </button>
+              </li>
+            ))}
+            {results.dutyAssignments.map((duty) => (
+              <li key={duty.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-day/duties');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{duty.personName}</p>
+                    <Badge tone="neutral">{duty.role}</Badge>
+                  </div>
+                </button>
+              </li>
+            ))}
+            {results.emergencyContacts.map((contact) => (
+              <li key={contact.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-day/emergency');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{contact.name}</p>
+                    <Badge tone="neutral">{contact.category}</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">{contact.phone}</p>
+                </button>
+              </li>
+            ))}
+            {results.closeoutItems.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-day/closeout');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{item.title}</p>
+                    <Badge tone="neutral">{item.status}</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">{item.category}</p>
                 </button>
               </li>
             ))}

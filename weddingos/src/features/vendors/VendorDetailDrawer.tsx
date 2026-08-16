@@ -26,6 +26,7 @@ import { VendorPaymentsSection } from './VendorPaymentsSection';
 import { VendorRefundsSection } from './VendorRefundsSection';
 import { AddPaymentModal } from './AddPaymentModal';
 import { ConfirmVendorModal } from './ConfirmVendorModal';
+import { VendorWeddingDaySection } from '@/features/weddingday/VendorWeddingDaySection';
 
 const READINESS_TONE: Record<(typeof READINESS_LEVELS)[number], 'success' | 'info' | 'warning' | 'critical'> = {
   Ready: 'success',
@@ -253,6 +254,11 @@ export function VendorDetailDrawer() {
                 ? `Last reconfirmed ${new Date(vendor.lastConfirmedAt).toLocaleString('en-IN')}${vendor.confirmedBy ? ` by ${vendor.confirmedBy}` : ''}.`
                 : 'Not yet reconfirmed.'}
             </FieldHint>
+          </section>
+
+          <section className="space-y-3 border-t border-line-soft pt-5">
+            <p className="text-sm font-semibold text-ink">Wedding day</p>
+            <VendorWeddingDaySection vendorId={vendor.id} />
           </section>
 
           <section className="space-y-3 border-t border-line-soft pt-5">

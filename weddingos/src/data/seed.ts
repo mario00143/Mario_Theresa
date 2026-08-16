@@ -32,8 +32,9 @@ import { buildSeedHouseholdsAndGuests } from './households.seed';
 import { buildSeedLogistics } from './logistics.seed';
 import { buildSeedFinance } from './finance.seed';
 import { buildSeedWeddingPrep, type WeddingPrepSeedBundle } from './weddingPrep.seed';
+import { buildSeedWeddingDay, type WeddingDaySeedBundle } from './weddingDay.seed';
 
-export interface SeedBundle extends WeddingPrepSeedBundle {
+export interface SeedBundle extends WeddingPrepSeedBundle, WeddingDaySeedBundle {
   settings: AppSettings;
   tasks: Task[];
   decisions: Decision[];
@@ -67,8 +68,20 @@ export function createSeedBundle(): SeedBundle {
   const logistics = buildSeedLogistics(households, guests);
   const finance = buildSeedFinance(households, guests, logistics.hotels, logistics.vehicles);
   const weddingPrep = buildSeedWeddingPrep(households, guests, finance.vendors, logistics.hotels);
+  const settings = seedSettings();
+  const weddingDay = buildSeedWeddingDay(
+    settings,
+    guests,
+    finance.vendors,
+    finance.vendorContacts,
+    logistics.hotels,
+    logistics.transportRoutes,
+    weddingPrep.churchProfiles,
+    weddingPrep.ceremonyParticipants,
+    weddingPrep.ceremonyItems,
+  );
   return {
-    settings: seedSettings(),
+    settings,
     tasks,
     decisions,
     owners: seedOwners(),
@@ -77,5 +90,6 @@ export function createSeedBundle(): SeedBundle {
     ...logistics,
     ...finance,
     ...weddingPrep,
+    ...weddingDay,
   };
 }

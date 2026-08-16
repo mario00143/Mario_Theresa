@@ -29,6 +29,10 @@ import { useMusicCues } from '@/hooks/useMusicCues';
 import { useMusicAVPlans } from '@/hooks/useMusicAVPlans';
 import { useGiftPlans } from '@/hooks/useGiftPlans';
 import { useWelcomeKits } from '@/hooks/useWelcomeKits';
+import { useRunSheet } from '@/hooks/useRunSheet';
+import { useLiveIssues } from '@/hooks/useLiveIssues';
+import { useVendorDayStatuses } from '@/hooks/useVendorDayStatuses';
+import { useGuestOperationalStatuses } from '@/hooks/useGuestOperationalStatuses';
 import { EventCards } from '@/features/dashboard/EventCards';
 import { PlanningHealthGrid } from '@/features/dashboard/PlanningHealthGrid';
 import { AttentionRequired } from '@/features/dashboard/AttentionRequired';
@@ -38,18 +42,21 @@ import { GuestSnapshot } from '@/features/dashboard/GuestSnapshot';
 import { LogisticsSnapshot } from '@/features/dashboard/LogisticsSnapshot';
 import { FinanceSnapshot } from '@/features/dashboard/FinanceSnapshot';
 import { WeddingPrepSnapshot } from '@/features/dashboard/WeddingPrepSnapshot';
+import { WeddingDaySnapshot } from '@/features/dashboard/WeddingDaySnapshot';
 import {
   buildAttentionItems,
   buildFinanceAttentionItems,
   buildGuestAttentionItems,
   buildLogisticsAttentionItems,
+  buildWeddingDayAttentionItems,
   buildWeddingPrepAttentionItems,
   computePlanningHealth,
   upcomingIncompleteTasks,
 } from '@/utils/dashboardStats';
 import { detectWeddingPrepIssues } from '@/utils/weddingPrepDataQuality';
 import { computeSuggestedCateringCounts } from '@/utils/cateringLogic';
-import { weddingDateTimeISO } from '@/utils/date';
+import { computeCommandCenterAlerts } from '@/utils/commandCenterLogic';
+import { daysUntil, weddingDateTimeISO } from '@/utils/date';
 
 export function DashboardPage() {
   const { tasks } = useTasks();
@@ -84,8 +91,13 @@ export function DashboardPage() {
   const { musicAVPlans } = useMusicAVPlans();
   const { giftPlans } = useGiftPlans();
   const { welcomeKits } = useWelcomeKits();
+  const { runSheetItems } = useRunSheet();
+  const { liveIssues } = useLiveIssues();
+  const { vendorDayStatuses } = useVendorDayStatuses();
+  const { guestOperationalStatuses } = useGuestOperationalStatuses();
 
   const health = computePlanningHealth(tasks, decisions);
+  const daysUntilWedding = daysUntil(settings.wedding.date);
   const suggestedCatering = computeSuggestedCateringCounts(guests, 'Wedding');
   const weddingPrepIssues = detectWeddingPrepIssues({
     churchProfile: churchProfiles[0],
@@ -116,6 +128,22 @@ export function DashboardPage() {
       settings.finance.criticalVendorCategories, weddingDateTimeISO(settings), 72, settings.finance.budgetVarianceWarningPercent,
     ),
     ...buildWeddingPrepAttentionItems(weddingPrepIssues),
+    ...(daysUntilWedding !== null && daysUntilWedding <= settings.weddingDay.commandCenterVisibilityDays
+      ? buildWeddingDayAttentionItems(
+          computeCommandCenterAlerts({
+            runSheetItems,
+            ceremonyItems,
+            liveIssues,
+            transportRoutes: routes,
+            transportAssignments,
+            vendors,
+            vendorDayStatuses,
+            guestOperationalStatuses,
+            settings,
+            referenceDateTimeISO: settings.weddingDay.simulationDateTimeISO ?? new Date().toISOString(),
+          }),
+        )
+      : []),
   ];
   const upcoming = upcomingIncompleteTasks(tasks, 10);
 
@@ -132,6 +160,7 @@ export function DashboardPage() {
       <LogisticsSnapshot />
       <FinanceSnapshot />
       <WeddingPrepSnapshot />
+      <WeddingDaySnapshot />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <AttentionRequired items={attentionItems} />

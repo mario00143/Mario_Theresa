@@ -51,10 +51,9 @@ describe('version 5 backup export', () => {
     resetToDemoData();
   });
 
-  it('exports version 5 with all wedding-preparation collections included', () => {
+  it('exports the current backup version with all wedding-preparation collections included', () => {
     const backup = exportBackup();
-    expect(backup.version).toBe(5);
-    expect(BACKUP_VERSION).toBe(5);
+    expect(backup.version).toBe(BACKUP_VERSION);
     expect(backup.churchProfiles.length).toBeGreaterThan(0);
     expect(backup.churchRequirements.length).toBeGreaterThan(0);
     expect(backup.ceremonyParticipants.length).toBeGreaterThan(0);

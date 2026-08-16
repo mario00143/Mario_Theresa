@@ -1,6 +1,6 @@
 import type { Guest, GuestEvent, RsvpResponse } from '@/types';
 import { generateId } from '@/lib/id';
-import { attireProfilesStore, ceremonyParticipantsStore, giftPlansStore, guestsStore } from '../stores';
+import { attireProfilesStore, ceremonyParticipantsStore, dutyAssignmentsStore, giftPlansStore, guestOperationalStatusesStore, guestsStore, liveIssuesStore } from '../stores';
 
 export type NewGuestInput = Omit<Guest, 'id' | 'createdAt' | 'updatedAt' | 'invitedEvents' | 'rsvpResponses'> &
   Partial<Pick<Guest, 'invitedEvents' | 'rsvpResponses'>>;
@@ -56,6 +56,11 @@ export function deleteGuest(id: string): void {
     prev.map((p) => (p.linkedGuestId === id ? { ...p, linkedGuestId: undefined, updatedAt: nowISO() } : p)),
   );
   giftPlansStore.set((prev) => prev.map((p) => (p.linkedGuestId === id ? { ...p, linkedGuestId: undefined, updatedAt: nowISO() } : p)));
+
+  // Phase 6 wedding-day records — same un-link-not-delete treatment, except the guest's own operational-status row, which is a 1:1 extension and cascades.
+  dutyAssignmentsStore.set((prev) => prev.map((d) => (d.linkedGuestId === id ? { ...d, linkedGuestId: undefined, updatedAt: nowISO() } : d)));
+  liveIssuesStore.set((prev) => prev.map((i) => (i.relatedGuestId === id ? { ...i, relatedGuestId: undefined, updatedAt: nowISO() } : i)));
+  guestOperationalStatusesStore.set((prev) => prev.filter((s) => s.guestId !== id));
 }
 
 export function moveGuestToHousehold(guestId: string, newHouseholdId: string): void {

@@ -81,6 +81,34 @@ export interface WeddingPrepSettings {
   sectionWeights: WeddingPrepSectionWeights;
 }
 
+/** Section 41: thresholds and toggles for the Wedding Day execution layer. */
+export interface WeddingDaySettings {
+  commandCenterVisibilityDays: number;
+  criticalIssueEscalationMinutes: number;
+  highIssueEscalationMinutes: number;
+  mediumIssueEscalationMinutes: number;
+  vendorArrivalGraceMinutes: number;
+  arrivalClusteringWindowMinutes: number;
+  defaultCeremonyBufferMinutes: number;
+  defaultReceptionBufferMinutes: number;
+  /** Wedding Day Mode toggle (section 30) — persisted so it survives a refresh. */
+  weddingDayModeEnabled: boolean;
+  /** Manual simulation-time override (section 9) so the Command Center can be tested before the real wedding day. */
+  simulationDateTimeISO?: string;
+}
+
+export const DEFAULT_WEDDING_DAY_SETTINGS: WeddingDaySettings = {
+  commandCenterVisibilityDays: 7,
+  criticalIssueEscalationMinutes: 5,
+  highIssueEscalationMinutes: 15,
+  mediumIssueEscalationMinutes: 30,
+  vendorArrivalGraceMinutes: 30,
+  arrivalClusteringWindowMinutes: 60,
+  defaultCeremonyBufferMinutes: 30,
+  defaultReceptionBufferMinutes: 30,
+  weddingDayModeEnabled: false,
+};
+
 export interface AppSettings {
   couple: CoupleSettings;
   engagement: EngagementSettings;
@@ -88,4 +116,5 @@ export interface AppSettings {
   weddingDetails: WeddingDetailsSettings;
   finance: FinanceSettings;
   weddingPrep: WeddingPrepSettings;
+  weddingDay: WeddingDaySettings;
 }

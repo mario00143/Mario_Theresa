@@ -63,3 +63,9 @@ export function weddingDateTimeISO(settings: Pick<AppSettings, 'wedding'>): stri
   const time = settings.wedding.ceremonyTime || '00:00';
   return `${settings.wedding.date}T${time}:00`;
 }
+
+/** Combines the wedding date and reception time into a single ISO datetime — the "R" reference for run-sheet relative timing. */
+export function receptionDateTimeISO(settings: Pick<AppSettings, 'wedding'>): string {
+  const time = settings.wedding.receptionTime || '00:00';
+  return `${settings.wedding.date}T${time}:00`;
+}

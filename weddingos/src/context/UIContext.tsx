@@ -13,7 +13,10 @@ export type QuickAddMode =
   | 'payment'
   | 'churchRequirement'
   | 'ceremonyItem'
-  | 'giftPlan';
+  | 'giftPlan'
+  | 'runSheetItem'
+  | 'liveIssue'
+  | 'dutyAssignment';
 
 interface UIContextValue {
   selectedTaskId: string | null;

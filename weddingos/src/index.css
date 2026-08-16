@@ -75,6 +75,16 @@ body {
   outline-offset: 2px;
 }
 
+/* Print: hide app chrome and interactive controls, let content flow cleanly onto the page. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}
+
 /* Scrollbar - subtle */
 ::-webkit-scrollbar {
   width: 10px;

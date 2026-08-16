@@ -6,20 +6,29 @@ import type {
   BudgetItem,
   CateringPlan,
   CeremonyItem,
+  CeremonyItemMovement,
   CeremonyParticipant,
   CeremonySequenceItem,
   ChurchProfile,
   ChurchRequirement,
+  CloseoutItem,
   Contract,
   Decision,
   DecorDeliverable,
   DecorPlan,
   Driver,
+  DutyAssignment,
+  EmergencyContact,
+  EmergencyResponseCard,
+  FinalReadinessReview,
   GiftPlan,
   GroomingAppointment,
   Guest,
+  GuestOperationalStatus,
   Hotel,
   Household,
+  LiveIssue,
+  ManifestFreezeState,
   MenuItem,
   MusicAVPlan,
   MusicCue,
@@ -32,6 +41,7 @@ import type {
   Room,
   RoomAssignment,
   RoomType,
+  RunSheetItem,
   Task,
   TransportAssignment,
   TransportRoute,
@@ -39,6 +49,7 @@ import type {
   Vehicle,
   Vendor,
   VendorContact,
+  VendorDayStatus,
   VendorQuote,
   WelcomeKit,
   WelcomeKitItem,
@@ -100,6 +111,17 @@ function ensureSeeded(): void {
   writeJSON(STORAGE_KEYS.giftPlans, bundle.giftPlans);
   writeJSON(STORAGE_KEYS.welcomeKits, bundle.welcomeKits);
   writeJSON(STORAGE_KEYS.welcomeKitItems, bundle.welcomeKitItems);
+  writeJSON(STORAGE_KEYS.runSheetItems, bundle.runSheetItems);
+  writeJSON(STORAGE_KEYS.liveIssues, bundle.liveIssues);
+  writeJSON(STORAGE_KEYS.dutyAssignments, bundle.dutyAssignments);
+  writeJSON(STORAGE_KEYS.vendorDayStatuses, bundle.vendorDayStatuses);
+  writeJSON(STORAGE_KEYS.ceremonyItemMovements, bundle.ceremonyItemMovements);
+  writeJSON(STORAGE_KEYS.emergencyContacts, bundle.emergencyContacts);
+  writeJSON(STORAGE_KEYS.emergencyResponseCards, bundle.emergencyResponseCards);
+  writeJSON(STORAGE_KEYS.closeoutItems, bundle.closeoutItems);
+  writeJSON(STORAGE_KEYS.finalReadinessReviews, bundle.finalReadinessReviews);
+  writeJSON(STORAGE_KEYS.guestOperationalStatuses, bundle.guestOperationalStatuses);
+  writeJSON(STORAGE_KEYS.manifestFreezeStates, bundle.manifestFreezeStates);
   writeJSON(STORAGE_KEYS.seeded, true);
 }
 
@@ -148,6 +170,17 @@ export const musicAVPlansStore = createStore<MusicAVPlan[]>(STORAGE_KEYS.musicAV
 export const giftPlansStore = createStore<GiftPlan[]>(STORAGE_KEYS.giftPlans, []);
 export const welcomeKitsStore = createStore<WelcomeKit[]>(STORAGE_KEYS.welcomeKits, []);
 export const welcomeKitItemsStore = createStore<WelcomeKitItem[]>(STORAGE_KEYS.welcomeKitItems, []);
+export const runSheetItemsStore = createStore<RunSheetItem[]>(STORAGE_KEYS.runSheetItems, []);
+export const liveIssuesStore = createStore<LiveIssue[]>(STORAGE_KEYS.liveIssues, []);
+export const dutyAssignmentsStore = createStore<DutyAssignment[]>(STORAGE_KEYS.dutyAssignments, []);
+export const vendorDayStatusesStore = createStore<VendorDayStatus[]>(STORAGE_KEYS.vendorDayStatuses, []);
+export const ceremonyItemMovementsStore = createStore<CeremonyItemMovement[]>(STORAGE_KEYS.ceremonyItemMovements, []);
+export const emergencyContactsStore = createStore<EmergencyContact[]>(STORAGE_KEYS.emergencyContacts, []);
+export const emergencyResponseCardsStore = createStore<EmergencyResponseCard[]>(STORAGE_KEYS.emergencyResponseCards, []);
+export const closeoutItemsStore = createStore<CloseoutItem[]>(STORAGE_KEYS.closeoutItems, []);
+export const finalReadinessReviewsStore = createStore<FinalReadinessReview[]>(STORAGE_KEYS.finalReadinessReviews, []);
+export const guestOperationalStatusesStore = createStore<GuestOperationalStatus[]>(STORAGE_KEYS.guestOperationalStatuses, []);
+export const manifestFreezeStatesStore = createStore<ManifestFreezeState[]>(STORAGE_KEYS.manifestFreezeStates, []);
 
 function seedSettingsFallback(): AppSettings {
   // ensureSeeded() above guarantees settings already exist in storage by this point;
@@ -201,5 +234,16 @@ export function resetToDemoData(): void {
   giftPlansStore.set(bundle.giftPlans);
   welcomeKitsStore.set(bundle.welcomeKits);
   welcomeKitItemsStore.set(bundle.welcomeKitItems);
+  runSheetItemsStore.set(bundle.runSheetItems);
+  liveIssuesStore.set(bundle.liveIssues);
+  dutyAssignmentsStore.set(bundle.dutyAssignments);
+  vendorDayStatusesStore.set(bundle.vendorDayStatuses);
+  ceremonyItemMovementsStore.set(bundle.ceremonyItemMovements);
+  emergencyContactsStore.set(bundle.emergencyContacts);
+  emergencyResponseCardsStore.set(bundle.emergencyResponseCards);
+  closeoutItemsStore.set(bundle.closeoutItems);
+  finalReadinessReviewsStore.set(bundle.finalReadinessReviews);
+  guestOperationalStatusesStore.set(bundle.guestOperationalStatuses);
+  manifestFreezeStatesStore.set(bundle.manifestFreezeStates);
   writeJSON(STORAGE_KEYS.seeded, true);
 }

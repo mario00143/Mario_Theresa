@@ -25,6 +25,7 @@ import { useAttireProfiles } from '@/hooks/useAttireProfiles';
 import { usePhotographyPlans } from '@/hooks/usePhotographyPlans';
 import { useMusicAVPlans } from '@/hooks/useMusicAVPlans';
 import { useGiftPlans } from '@/hooks/useGiftPlans';
+import { useRunSheetItemsForTask } from '@/hooks/useRunSheet';
 import { formatDisplayDate } from '@/utils/date';
 import { getDependencyStatus, isProtectedPeriodViolation, validateTask } from '@/utils/taskLogic';
 import { PROTECTED_PERIOD_MESSAGE } from '@/lib/constants';
@@ -50,6 +51,7 @@ export function TaskDetailDrawer() {
   const { photographyPlans } = usePhotographyPlans();
   const { musicAVPlans } = useMusicAVPlans();
   const { giftPlans } = useGiftPlans();
+  const relatedRunSheetItems = useRunSheetItemsForTask(task?.id);
   const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [tagsInput, setTagsInput] = useState('');
@@ -682,6 +684,31 @@ export function TaskDetailDrawer() {
               </div>
             )}
           </section>
+
+          {relatedRunSheetItems.length > 0 && (
+            <section className="space-y-2 border-t border-line-soft pt-5">
+              <div>
+                <p className="text-sm font-semibold text-ink">Related run-sheet items</p>
+                <p className="text-xs text-ink-faint mt-0.5">Wedding-day run-sheet items that reference this task. Status is tracked independently on each side.</p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {relatedRunSheetItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      closeTaskDetail();
+                      navigate('/wedding-day/run-sheet');
+                    }}
+                  >
+                    <Badge tone="info">
+                      {item.activity} ({item.status})
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
 
           <DependenciesEditor
             task={task}
