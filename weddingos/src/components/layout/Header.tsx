@@ -2,13 +2,18 @@ import { Heart, Plus, Radio, Search } from 'lucide-react';
 import { useSettings } from '@/hooks/useSettings';
 import { getCountdown } from '@/utils/countdown';
 import { useUI } from '@/context/UIContext';
+import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { APP_NAME } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
+import { SyncStatusIndicator } from './SyncStatusIndicator';
 
 export function Header() {
   const { settings, updateSettings } = useSettings();
   const { openSearch, openQuickAdd } = useUI();
+  const { supabaseEnabled } = useAuth();
+  const { currentWorkspace } = useWorkspace();
   const weddingDayModeEnabled = settings.weddingDay.weddingDayModeEnabled;
   const engagementCountdown = getCountdown(settings.engagement.date);
   const weddingCountdown = getCountdown(settings.wedding.date);
@@ -20,6 +25,11 @@ export function Header() {
           <Heart className="size-4" aria-hidden="true" />
         </div>
         <span className="text-sm font-semibold text-ink">{APP_NAME}</span>
+        {!supabaseEnabled && (
+          <span className="rounded-md border border-line-soft bg-surface-subtle px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-ink-faint uppercase">
+            Demo
+          </span>
+        )}
       </div>
 
       <div className="hidden lg:flex items-center gap-4 text-sm">
@@ -27,7 +37,8 @@ export function Header() {
         <CountdownChip label="Wedding · Hyderabad" countdown={weddingCountdown} />
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-3">
+        {supabaseEnabled && currentWorkspace && <SyncStatusIndicator />}
         <button
           type="button"
           onClick={() => updateSettings({ weddingDay: { ...settings.weddingDay, weddingDayModeEnabled: !weddingDayModeEnabled } })}

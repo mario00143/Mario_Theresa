@@ -1,5 +1,6 @@
 import type { TransportAssignment } from '@/types';
 import { generateId } from '@/lib/id';
+import { logAuditAction } from '@/data/supabase/auditLogRepository';
 import { transportAssignmentsStore, transportRoutesStore, vehiclesStore } from '../stores';
 import { seatsAssignedForRoute } from '@/utils/transportLogic';
 
@@ -42,6 +43,7 @@ export function addTransportAssignment(input: NewTransportAssignmentInput): Tran
   const timestamp = nowISO();
   const assignment: TransportAssignment = { ...input, id: generateId('transportassign'), createdAt: timestamp, updatedAt: timestamp };
   transportAssignmentsStore.set((prev) => [...prev, assignment]);
+  logAuditAction({ action: 'transportAssignment.create', entityType: 'TransportAssignment', entityId: assignment.id, summary: `Assigned guest ${assignment.guestId} to route ${assignment.routeId}` });
   return assignment;
 }
 
@@ -69,8 +71,10 @@ export function updateTransportAssignment(id: string, patch: Partial<Omit<Transp
   }
 
   transportAssignmentsStore.set((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch, updatedAt: nowISO() } : a)));
+  logAuditAction({ action: 'transportAssignment.update', entityType: 'TransportAssignment', entityId: id, summary: `Updated transport assignment ${id}` });
 }
 
 export function deleteTransportAssignment(id: string): void {
   transportAssignmentsStore.set((prev) => prev.filter((a) => a.id !== id));
+  logAuditAction({ action: 'transportAssignment.delete', entityType: 'TransportAssignment', entityId: id, summary: `Deleted transport assignment ${id}` });
 }

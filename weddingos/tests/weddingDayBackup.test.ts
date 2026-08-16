@@ -30,15 +30,15 @@ const WEDDING_DAY_KEYS = [
   'manifestFreezeStates',
 ] as const;
 
-describe('version 6 backup export', () => {
+describe('wedding-day command center backup export (introduced in v6)', () => {
   beforeEach(() => {
     resetToDemoData();
   });
 
-  it('exports version 6 with all wedding-day command center collections included', () => {
+  it('exports the current backup version with all wedding-day command center collections included', () => {
     const backup = exportBackup();
-    expect(backup.version).toBe(6);
-    expect(BACKUP_VERSION).toBe(6);
+    expect(backup.version).toBe(BACKUP_VERSION);
+    expect(BACKUP_VERSION).toBeGreaterThanOrEqual(6);
     expect(backup.runSheetItems.length).toBeGreaterThan(0);
     expect(backup.liveIssues.length).toBeGreaterThan(0);
     expect(backup.dutyAssignments.length).toBeGreaterThan(0);

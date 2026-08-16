@@ -1,5 +1,6 @@
 import type { RoomAssignment } from '@/types';
 import { generateId } from '@/lib/id';
+import { logAuditAction } from '@/data/supabase/auditLogRepository';
 import { roomAssignmentsStore, roomsStore, roomTypesStore } from '../stores';
 import { getRoomCapacity, occupantsOverlapping, roomAssignmentsOverlap } from '@/utils/roomLogic';
 
@@ -62,6 +63,7 @@ export function addRoomAssignment(input: NewRoomAssignmentInput): RoomAssignment
   const timestamp = nowISO();
   const assignment: RoomAssignment = { ...input, id: generateId('roomassign'), createdAt: timestamp, updatedAt: timestamp };
   roomAssignmentsStore.set((prev) => [...prev, assignment]);
+  logAuditAction({ action: 'roomAssignment.create', entityType: 'RoomAssignment', entityId: assignment.id, summary: `Assigned guest ${assignment.guestId} to room ${assignment.roomId}` });
   return assignment;
 }
 
@@ -93,8 +95,10 @@ export function updateRoomAssignment(id: string, patch: Partial<Omit<RoomAssignm
   }
 
   roomAssignmentsStore.set((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch, updatedAt: nowISO() } : a)));
+  logAuditAction({ action: 'roomAssignment.update', entityType: 'RoomAssignment', entityId: id, summary: `Updated room assignment ${id}` });
 }
 
 export function deleteRoomAssignment(id: string): void {
   roomAssignmentsStore.set((prev) => prev.filter((a) => a.id !== id));
+  logAuditAction({ action: 'roomAssignment.delete', entityType: 'RoomAssignment', entityId: id, summary: `Deleted room assignment ${id}` });
 }

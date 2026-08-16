@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarDays, ChurchIcon, ClipboardList, FileText, LayoutDashboard, ListChecks, Radio, Route, Scale, Settings, Siren, Users, Wallet } from 'lucide-react';
+import { AlertTriangle, CalendarDays, ChurchIcon, ClipboardList, FileText, FolderLock, LayoutDashboard, ListChecks, Radio, Route, Scale, Settings, Siren, Users, Wallet } from 'lucide-react';
 
 export const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -10,6 +10,7 @@ export const NAV_ITEMS = [
   { to: '/wedding-day', label: 'Wedding Day', icon: Radio, end: false },
   { to: '/calendar', label: 'Calendar', icon: CalendarDays, end: false },
   { to: '/decisions', label: 'Decisions', icon: Scale, end: false },
+  { to: '/documents', label: 'Documents', icon: FolderLock, end: false },
   { to: '/settings', label: 'Settings', icon: Settings, end: false },
 ] as const;
 

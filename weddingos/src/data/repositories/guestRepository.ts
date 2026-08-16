@@ -1,5 +1,6 @@
 import type { Guest, GuestEvent, RsvpResponse } from '@/types';
 import { generateId } from '@/lib/id';
+import { logAuditAction } from '@/data/supabase/auditLogRepository';
 import { attireProfilesStore, ceremonyParticipantsStore, dutyAssignmentsStore, giftPlansStore, guestOperationalStatusesStore, guestsStore, liveIssuesStore } from '../stores';
 
 export type NewGuestInput = Omit<Guest, 'id' | 'createdAt' | 'updatedAt' | 'invitedEvents' | 'rsvpResponses'> &
@@ -48,7 +49,9 @@ export function updateGuest(id: string, patch: Partial<Omit<Guest, 'id' | 'creat
 
 /** Deletes a guest and un-links (not deletes) any Phase 5 records that optionally referenced it. */
 export function deleteGuest(id: string): void {
+  const guest = guestsStore.get().find((g) => g.id === id);
   guestsStore.set((prev) => prev.filter((guest) => guest.id !== id));
+  logAuditAction({ action: 'guest.delete', entityType: 'Guest', entityId: id, summary: `Deleted guest "${guest?.fullName ?? id}"` });
   ceremonyParticipantsStore.set((prev) =>
     prev.map((p) => (p.linkedGuestId === id ? { ...p, linkedGuestId: undefined, updatedAt: nowISO() } : p)),
   );

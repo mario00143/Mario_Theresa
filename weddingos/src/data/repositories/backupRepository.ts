@@ -837,6 +837,19 @@ export function validateBackup(data: unknown): BackupValidationResult {
     }
   }
 
+  // v7's workspace/documents/redactedSections are always optional — present
+  // only for a backup exported from an active Supabase workspace — so they
+  // are checked structurally only when provided, never required by version.
+  if (data.workspace !== undefined) {
+    const ws = data.workspace;
+    if (!isPlainObject(ws) || typeof ws.name !== 'string' || typeof ws.groomName !== 'string' || typeof ws.brideName !== 'string') {
+      errors.push('Workspace metadata section is malformed.');
+    }
+  }
+  if (data.documents !== undefined && !Array.isArray(data.documents)) {
+    errors.push('Documents section is malformed.');
+  }
+
   return { valid: errors.length === 0, errors };
 }
 
@@ -868,6 +881,9 @@ export function normalizeBackup(data: unknown): WeddingOSBackup {
   return {
     version: typeof raw.version === 'number' ? raw.version : BACKUP_VERSION,
     exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : new Date().toISOString(),
+    workspace: raw.workspace as WeddingOSBackup['workspace'],
+    documents: Array.isArray(raw.documents) ? (raw.documents as WeddingOSBackup['documents']) : undefined,
+    redactedSections: Array.isArray(raw.redactedSections) ? (raw.redactedSections as string[]) : undefined,
     settings: normalizeSettings(raw.settings),
     tasks: raw.tasks as Task[],
     decisions: raw.decisions as Decision[],

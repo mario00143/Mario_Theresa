@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { PermissionGate } from '@/components/ui/PermissionGate';
 import { useVendors } from '@/hooks/useVendors';
 import { useUI } from '@/context/UIContext';
 import { VendorFilters } from './VendorFilters';
@@ -18,9 +19,11 @@ export function VendorsListView() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-ink">Vendors</h2>
-        <Button variant="primary" size="sm" icon={<Plus className="size-4" aria-hidden="true" />} onClick={() => setAddOpen(true)}>
-          Add Vendor
-        </Button>
+        <PermissionGate module="vendors">
+          <Button variant="primary" size="sm" icon={<Plus className="size-4" aria-hidden="true" />} onClick={() => setAddOpen(true)}>
+            Add Vendor
+          </Button>
+        </PermissionGate>
       </div>
       <VendorFilters filters={filters} setFilter={setFilter} resetFilters={resetFilters} resultCount={filtered.length} />
       <VendorTable vendors={filtered} />

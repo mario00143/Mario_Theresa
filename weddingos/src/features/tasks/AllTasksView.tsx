@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { PermissionGate } from '@/components/ui/PermissionGate';
 import { useTasks } from '@/hooks/useTasks';
 import { useUI } from '@/context/UIContext';
 import { TaskFilters } from './TaskFilters';
@@ -15,9 +16,11 @@ export function AllTasksView() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-ink">All Tasks</h2>
-        <Button variant="primary" size="sm" icon={<Plus className="size-4" aria-hidden="true" />} onClick={() => openQuickAdd('task')}>
-          New Task
-        </Button>
+        <PermissionGate module="tasks">
+          <Button variant="primary" size="sm" icon={<Plus className="size-4" aria-hidden="true" />} onClick={() => openQuickAdd('task')}>
+            New Task
+          </Button>
+        </PermissionGate>
       </div>
       <TaskFilters filters={filters} setFilter={setFilter} resetFilters={resetFilters} resultCount={filtered.length} />
       <TaskListView tasks={filtered} />

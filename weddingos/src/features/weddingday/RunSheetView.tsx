@@ -4,6 +4,7 @@ import type { RunSheetCategory, RunSheetItem, RunSheetStatus } from '@/types';
 import { RUN_SHEET_CATEGORIES, RUN_SHEET_STATUSES } from '@/types';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { PermissionGate } from '@/components/ui/PermissionGate';
 import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { Select } from '@/components/ui/Field';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -99,9 +100,11 @@ export function RunSheetView() {
           <Button variant="secondary" size="sm" icon={<Download className="size-3.5" aria-hidden="true" />} onClick={() => downloadTextFile(runSheetCsvFilename(), runSheetToCSV(sorted, settings), 'text/csv')}>
             Export CSV
           </Button>
-          <Button variant="primary" size="sm" icon={<Plus className="size-3.5" aria-hidden="true" />} onClick={handleAdd}>
-            Add item
-          </Button>
+          <PermissionGate module="weddingDay">
+            <Button variant="primary" size="sm" icon={<Plus className="size-3.5" aria-hidden="true" />} onClick={handleAdd}>
+              Add item
+            </Button>
+          </PermissionGate>
         </div>
       </CardHeader>
       <CardBody className="space-y-3">

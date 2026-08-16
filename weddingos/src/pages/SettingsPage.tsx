@@ -1,13 +1,20 @@
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { cn } from '@/lib/cn';
+import { useAuth } from '@/context/AuthContext';
 import { EventDetailsForm } from '@/features/settings/EventDetailsForm';
 import { OwnerRolesManager } from '@/features/settings/OwnerRolesManager';
 import { FinanceSettingsForm } from '@/features/settings/FinanceSettingsForm';
 import { WeddingPrepSettingsForm } from '@/features/settings/WeddingPrepSettingsForm';
 import { WeddingDaySettingsForm } from '@/features/settings/WeddingDaySettingsForm';
 import { DataManagement } from '@/features/settings/DataManagement';
+import { MyAccountSection } from '@/features/settings/MyAccountSection';
+import { WorkspaceSettingsSection } from '@/features/settings/WorkspaceSettingsSection';
+import { MembersSection } from '@/features/settings/MembersSection';
+import { MigrationWizard } from '@/features/migration/MigrationWizard';
+import { AuditLogView } from '@/features/audit/AuditLogView';
+import { WorkspaceBackupExport } from '@/features/backup/WorkspaceBackupExport';
 
-const TABS = [
+const LOCAL_TABS = [
   { to: '/settings', label: 'Event Details', end: true },
   { to: '/settings/owners', label: 'Owner Roles', end: false },
   { to: '/settings/finance', label: 'Finance', end: false },
@@ -16,7 +23,19 @@ const TABS = [
   { to: '/settings/data', label: 'Data Management', end: false },
 ];
 
+const SUPABASE_TABS = [
+  ...LOCAL_TABS,
+  { to: '/settings/account', label: 'My Account', end: false },
+  { to: '/settings/workspace', label: 'Workspace', end: false },
+  { to: '/settings/members', label: 'Members', end: false },
+  { to: '/settings/migration', label: 'Migrate Local Data', end: false },
+  { to: '/settings/backup', label: 'Backup', end: false },
+  { to: '/settings/audit-log', label: 'Audit Log', end: false },
+];
+
 export function SettingsPage() {
+  const { supabaseEnabled } = useAuth();
+  const TABS = supabaseEnabled ? SUPABASE_TABS : LOCAL_TABS;
   return (
     <div className="space-y-4">
       <div>
@@ -49,6 +68,16 @@ export function SettingsPage() {
         <Route path="wedding-prep" element={<WeddingPrepSettingsForm />} />
         <Route path="wedding-day" element={<WeddingDaySettingsForm />} />
         <Route path="data" element={<DataManagement />} />
+        {supabaseEnabled && (
+          <>
+            <Route path="account" element={<MyAccountSection />} />
+            <Route path="workspace" element={<WorkspaceSettingsSection />} />
+            <Route path="members" element={<MembersSection />} />
+            <Route path="migration" element={<MigrationWizard />} />
+            <Route path="backup" element={<WorkspaceBackupExport />} />
+            <Route path="audit-log" element={<AuditLogView />} />
+          </>
+        )}
       </Routes>
     </div>
   );

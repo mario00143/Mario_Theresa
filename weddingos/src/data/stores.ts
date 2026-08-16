@@ -56,6 +56,8 @@ import type {
 } from '@/types';
 import { createStore } from '@/lib/store';
 import { readJSON, STORAGE_KEYS, writeJSON } from '@/lib/storage';
+import { hydrateSyncedStore, withSupabaseSync } from '@/lib/supabaseSync';
+import { legacyEntityMap } from './supabase/entityRegistry';
 import { createSeedBundle } from './seed';
 
 /**
@@ -128,59 +130,59 @@ function ensureSeeded(): void {
 ensureSeeded();
 
 export const settingsStore = createStore<AppSettings>(STORAGE_KEYS.settings, seedSettingsFallback());
-export const tasksStore = createStore<Task[]>(STORAGE_KEYS.tasks, []);
-export const decisionsStore = createStore<Decision[]>(STORAGE_KEYS.decisions, []);
-export const ownersStore = createStore<Owner[]>(STORAGE_KEYS.owners, []);
-export const householdsStore = createStore<Household[]>(STORAGE_KEYS.households, []);
-export const guestsStore = createStore<Guest[]>(STORAGE_KEYS.guests, []);
-export const travelSegmentsStore = createStore<TravelSegment[]>(STORAGE_KEYS.travelSegments, []);
-export const hotelsStore = createStore<Hotel[]>(STORAGE_KEYS.hotels, []);
-export const roomTypesStore = createStore<RoomType[]>(STORAGE_KEYS.roomTypes, []);
-export const roomsStore = createStore<Room[]>(STORAGE_KEYS.rooms, []);
-export const roomAssignmentsStore = createStore<RoomAssignment[]>(STORAGE_KEYS.roomAssignments, []);
-export const vehiclesStore = createStore<Vehicle[]>(STORAGE_KEYS.vehicles, []);
-export const driversStore = createStore<Driver[]>(STORAGE_KEYS.drivers, []);
-export const transportRoutesStore = createStore<TransportRoute[]>(STORAGE_KEYS.transportRoutes, []);
-export const transportAssignmentsStore = createStore<TransportAssignment[]>(STORAGE_KEYS.transportAssignments, []);
-export const vendorsStore = createStore<Vendor[]>(STORAGE_KEYS.vendors, []);
-export const vendorContactsStore = createStore<VendorContact[]>(STORAGE_KEYS.vendorContacts, []);
-export const vendorQuotesStore = createStore<VendorQuote[]>(STORAGE_KEYS.vendorQuotes, []);
-export const contractsStore = createStore<Contract[]>(STORAGE_KEYS.contracts, []);
-export const budgetCategoriesStore = createStore<BudgetCategory[]>(STORAGE_KEYS.budgetCategories, []);
-export const budgetItemsStore = createStore<BudgetItem[]>(STORAGE_KEYS.budgetItems, []);
-export const paymentSchedulesStore = createStore<PaymentSchedule[]>(STORAGE_KEYS.paymentSchedules, []);
-export const paymentsStore = createStore<Payment[]>(STORAGE_KEYS.payments, []);
-export const refundsStore = createStore<Refund[]>(STORAGE_KEYS.refunds, []);
-export const churchProfilesStore = createStore<ChurchProfile[]>(STORAGE_KEYS.churchProfiles, []);
-export const churchRequirementsStore = createStore<ChurchRequirement[]>(STORAGE_KEYS.churchRequirements, []);
-export const ceremonyParticipantsStore = createStore<CeremonyParticipant[]>(STORAGE_KEYS.ceremonyParticipants, []);
-export const ceremonySequenceItemsStore = createStore<CeremonySequenceItem[]>(STORAGE_KEYS.ceremonySequenceItems, []);
-export const ceremonyItemsStore = createStore<CeremonyItem[]>(STORAGE_KEYS.ceremonyItems, []);
-export const cateringPlansStore = createStore<CateringPlan[]>(STORAGE_KEYS.cateringPlans, []);
-export const menuItemsStore = createStore<MenuItem[]>(STORAGE_KEYS.menuItems, []);
-export const decorPlansStore = createStore<DecorPlan[]>(STORAGE_KEYS.decorPlans, []);
-export const decorDeliverablesStore = createStore<DecorDeliverable[]>(STORAGE_KEYS.decorDeliverables, []);
-export const attireProfilesStore = createStore<AttireProfile[]>(STORAGE_KEYS.attireProfiles, []);
-export const attireItemsStore = createStore<AttireItem[]>(STORAGE_KEYS.attireItems, []);
-export const groomingAppointmentsStore = createStore<GroomingAppointment[]>(STORAGE_KEYS.groomingAppointments, []);
-export const photographyPlansStore = createStore<PhotographyPlan[]>(STORAGE_KEYS.photographyPlans, []);
-export const photoGroupsStore = createStore<PhotoGroup[]>(STORAGE_KEYS.photoGroups, []);
-export const musicCuesStore = createStore<MusicCue[]>(STORAGE_KEYS.musicCues, []);
-export const musicAVPlansStore = createStore<MusicAVPlan[]>(STORAGE_KEYS.musicAVPlans, []);
-export const giftPlansStore = createStore<GiftPlan[]>(STORAGE_KEYS.giftPlans, []);
-export const welcomeKitsStore = createStore<WelcomeKit[]>(STORAGE_KEYS.welcomeKits, []);
-export const welcomeKitItemsStore = createStore<WelcomeKitItem[]>(STORAGE_KEYS.welcomeKitItems, []);
-export const runSheetItemsStore = createStore<RunSheetItem[]>(STORAGE_KEYS.runSheetItems, []);
-export const liveIssuesStore = createStore<LiveIssue[]>(STORAGE_KEYS.liveIssues, []);
-export const dutyAssignmentsStore = createStore<DutyAssignment[]>(STORAGE_KEYS.dutyAssignments, []);
-export const vendorDayStatusesStore = createStore<VendorDayStatus[]>(STORAGE_KEYS.vendorDayStatuses, []);
-export const ceremonyItemMovementsStore = createStore<CeremonyItemMovement[]>(STORAGE_KEYS.ceremonyItemMovements, []);
-export const emergencyContactsStore = createStore<EmergencyContact[]>(STORAGE_KEYS.emergencyContacts, []);
-export const emergencyResponseCardsStore = createStore<EmergencyResponseCard[]>(STORAGE_KEYS.emergencyResponseCards, []);
-export const closeoutItemsStore = createStore<CloseoutItem[]>(STORAGE_KEYS.closeoutItems, []);
-export const finalReadinessReviewsStore = createStore<FinalReadinessReview[]>(STORAGE_KEYS.finalReadinessReviews, []);
-export const guestOperationalStatusesStore = createStore<GuestOperationalStatus[]>(STORAGE_KEYS.guestOperationalStatuses, []);
-export const manifestFreezeStatesStore = createStore<ManifestFreezeState[]>(STORAGE_KEYS.manifestFreezeStates, []);
+export const tasksStore = withSupabaseSync(createStore<Task[]>(STORAGE_KEYS.tasks, []), legacyEntityMap('tasks'));
+export const decisionsStore = withSupabaseSync(createStore<Decision[]>(STORAGE_KEYS.decisions, []), legacyEntityMap('decisions'));
+export const ownersStore = withSupabaseSync(createStore<Owner[]>(STORAGE_KEYS.owners, []), legacyEntityMap('owners'));
+export const householdsStore = withSupabaseSync(createStore<Household[]>(STORAGE_KEYS.households, []), legacyEntityMap('households'));
+export const guestsStore = withSupabaseSync(createStore<Guest[]>(STORAGE_KEYS.guests, []), legacyEntityMap('guests'));
+export const travelSegmentsStore = withSupabaseSync(createStore<TravelSegment[]>(STORAGE_KEYS.travelSegments, []), legacyEntityMap('travelSegments'));
+export const hotelsStore = withSupabaseSync(createStore<Hotel[]>(STORAGE_KEYS.hotels, []), legacyEntityMap('hotels'));
+export const roomTypesStore = withSupabaseSync(createStore<RoomType[]>(STORAGE_KEYS.roomTypes, []), legacyEntityMap('roomTypes'));
+export const roomsStore = withSupabaseSync(createStore<Room[]>(STORAGE_KEYS.rooms, []), legacyEntityMap('rooms'));
+export const roomAssignmentsStore = withSupabaseSync(createStore<RoomAssignment[]>(STORAGE_KEYS.roomAssignments, []), legacyEntityMap('roomAssignments'));
+export const vehiclesStore = withSupabaseSync(createStore<Vehicle[]>(STORAGE_KEYS.vehicles, []), legacyEntityMap('vehicles'));
+export const driversStore = withSupabaseSync(createStore<Driver[]>(STORAGE_KEYS.drivers, []), legacyEntityMap('drivers'));
+export const transportRoutesStore = withSupabaseSync(createStore<TransportRoute[]>(STORAGE_KEYS.transportRoutes, []), legacyEntityMap('transportRoutes'));
+export const transportAssignmentsStore = withSupabaseSync(createStore<TransportAssignment[]>(STORAGE_KEYS.transportAssignments, []), legacyEntityMap('transportAssignments'));
+export const vendorsStore = withSupabaseSync(createStore<Vendor[]>(STORAGE_KEYS.vendors, []), legacyEntityMap('vendors'));
+export const vendorContactsStore = withSupabaseSync(createStore<VendorContact[]>(STORAGE_KEYS.vendorContacts, []), legacyEntityMap('vendorContacts'));
+export const vendorQuotesStore = withSupabaseSync(createStore<VendorQuote[]>(STORAGE_KEYS.vendorQuotes, []), legacyEntityMap('vendorQuotes'));
+export const contractsStore = withSupabaseSync(createStore<Contract[]>(STORAGE_KEYS.contracts, []), legacyEntityMap('contracts'));
+export const budgetCategoriesStore = withSupabaseSync(createStore<BudgetCategory[]>(STORAGE_KEYS.budgetCategories, []), legacyEntityMap('budgetCategories'));
+export const budgetItemsStore = withSupabaseSync(createStore<BudgetItem[]>(STORAGE_KEYS.budgetItems, []), legacyEntityMap('budgetItems'));
+export const paymentSchedulesStore = withSupabaseSync(createStore<PaymentSchedule[]>(STORAGE_KEYS.paymentSchedules, []), legacyEntityMap('paymentSchedules'));
+export const paymentsStore = withSupabaseSync(createStore<Payment[]>(STORAGE_KEYS.payments, []), legacyEntityMap('payments'));
+export const refundsStore = withSupabaseSync(createStore<Refund[]>(STORAGE_KEYS.refunds, []), legacyEntityMap('refunds'));
+export const churchProfilesStore = withSupabaseSync(createStore<ChurchProfile[]>(STORAGE_KEYS.churchProfiles, []), legacyEntityMap('churchProfiles'));
+export const churchRequirementsStore = withSupabaseSync(createStore<ChurchRequirement[]>(STORAGE_KEYS.churchRequirements, []), legacyEntityMap('churchRequirements'));
+export const ceremonyParticipantsStore = withSupabaseSync(createStore<CeremonyParticipant[]>(STORAGE_KEYS.ceremonyParticipants, []), legacyEntityMap('ceremonyParticipants'));
+export const ceremonySequenceItemsStore = withSupabaseSync(createStore<CeremonySequenceItem[]>(STORAGE_KEYS.ceremonySequenceItems, []), legacyEntityMap('ceremonySequenceItems'));
+export const ceremonyItemsStore = withSupabaseSync(createStore<CeremonyItem[]>(STORAGE_KEYS.ceremonyItems, []), legacyEntityMap('ceremonyItems'));
+export const cateringPlansStore = withSupabaseSync(createStore<CateringPlan[]>(STORAGE_KEYS.cateringPlans, []), legacyEntityMap('cateringPlans'));
+export const menuItemsStore = withSupabaseSync(createStore<MenuItem[]>(STORAGE_KEYS.menuItems, []), legacyEntityMap('menuItems'));
+export const decorPlansStore = withSupabaseSync(createStore<DecorPlan[]>(STORAGE_KEYS.decorPlans, []), legacyEntityMap('decorPlans'));
+export const decorDeliverablesStore = withSupabaseSync(createStore<DecorDeliverable[]>(STORAGE_KEYS.decorDeliverables, []), legacyEntityMap('decorDeliverables'));
+export const attireProfilesStore = withSupabaseSync(createStore<AttireProfile[]>(STORAGE_KEYS.attireProfiles, []), legacyEntityMap('attireProfiles'));
+export const attireItemsStore = withSupabaseSync(createStore<AttireItem[]>(STORAGE_KEYS.attireItems, []), legacyEntityMap('attireItems'));
+export const groomingAppointmentsStore = withSupabaseSync(createStore<GroomingAppointment[]>(STORAGE_KEYS.groomingAppointments, []), legacyEntityMap('groomingAppointments'));
+export const photographyPlansStore = withSupabaseSync(createStore<PhotographyPlan[]>(STORAGE_KEYS.photographyPlans, []), legacyEntityMap('photographyPlans'));
+export const photoGroupsStore = withSupabaseSync(createStore<PhotoGroup[]>(STORAGE_KEYS.photoGroups, []), legacyEntityMap('photoGroups'));
+export const musicCuesStore = withSupabaseSync(createStore<MusicCue[]>(STORAGE_KEYS.musicCues, []), legacyEntityMap('musicCues'));
+export const musicAVPlansStore = withSupabaseSync(createStore<MusicAVPlan[]>(STORAGE_KEYS.musicAVPlans, []), legacyEntityMap('musicAVPlans'));
+export const giftPlansStore = withSupabaseSync(createStore<GiftPlan[]>(STORAGE_KEYS.giftPlans, []), legacyEntityMap('giftPlans'));
+export const welcomeKitsStore = withSupabaseSync(createStore<WelcomeKit[]>(STORAGE_KEYS.welcomeKits, []), legacyEntityMap('welcomeKits'));
+export const welcomeKitItemsStore = withSupabaseSync(createStore<WelcomeKitItem[]>(STORAGE_KEYS.welcomeKitItems, []), legacyEntityMap('welcomeKitItems'));
+export const runSheetItemsStore = withSupabaseSync(createStore<RunSheetItem[]>(STORAGE_KEYS.runSheetItems, []), legacyEntityMap('runSheetItems'));
+export const liveIssuesStore = withSupabaseSync(createStore<LiveIssue[]>(STORAGE_KEYS.liveIssues, []), legacyEntityMap('liveIssues'));
+export const dutyAssignmentsStore = withSupabaseSync(createStore<DutyAssignment[]>(STORAGE_KEYS.dutyAssignments, []), legacyEntityMap('dutyAssignments'));
+export const vendorDayStatusesStore = withSupabaseSync(createStore<VendorDayStatus[]>(STORAGE_KEYS.vendorDayStatuses, []), legacyEntityMap('vendorDayStatuses'));
+export const ceremonyItemMovementsStore = withSupabaseSync(createStore<CeremonyItemMovement[]>(STORAGE_KEYS.ceremonyItemMovements, []), legacyEntityMap('ceremonyItemMovements'));
+export const emergencyContactsStore = withSupabaseSync(createStore<EmergencyContact[]>(STORAGE_KEYS.emergencyContacts, []), legacyEntityMap('emergencyContacts'));
+export const emergencyResponseCardsStore = withSupabaseSync(createStore<EmergencyResponseCard[]>(STORAGE_KEYS.emergencyResponseCards, []), legacyEntityMap('emergencyResponseCards'));
+export const closeoutItemsStore = withSupabaseSync(createStore<CloseoutItem[]>(STORAGE_KEYS.closeoutItems, []), legacyEntityMap('closeoutItems'));
+export const finalReadinessReviewsStore = withSupabaseSync(createStore<FinalReadinessReview[]>(STORAGE_KEYS.finalReadinessReviews, []), legacyEntityMap('finalReadinessReviews'));
+export const guestOperationalStatusesStore = withSupabaseSync(createStore<GuestOperationalStatus[]>(STORAGE_KEYS.guestOperationalStatuses, []), legacyEntityMap('guestOperationalStatuses'));
+export const manifestFreezeStatesStore = withSupabaseSync(createStore<ManifestFreezeState[]>(STORAGE_KEYS.manifestFreezeStates, []), legacyEntityMap('manifestFreezeStates'));
 
 function seedSettingsFallback(): AppSettings {
   // ensureSeeded() above guarantees settings already exist in storage by this point;
@@ -246,4 +248,73 @@ export function resetToDemoData(): void {
   guestOperationalStatusesStore.set(bundle.guestOperationalStatuses);
   manifestFreezeStatesStore.set(bundle.manifestFreezeStates);
   writeJSON(STORAGE_KEYS.seeded, true);
+}
+
+/**
+ * Every legacy (v1-v6) collection that's been made Supabase-capable via
+ * withSupabaseSync — used by WorkspaceProvider to hydrate all of them from
+ * Supabase in one pass right after a workspace is selected. `settingsStore`
+ * is intentionally excluded: AppSettings is a single JSONB blob per
+ * workspace, not an array collection, and is synced separately by
+ * WorkspaceProvider via data/supabase/workspaceSettingsRepository.ts.
+ */
+const SYNCED_STORE_HYDRATORS: Array<() => Promise<void>> = [
+  () => hydrateSyncedStore(tasksStore),
+  () => hydrateSyncedStore(decisionsStore),
+  () => hydrateSyncedStore(ownersStore),
+  () => hydrateSyncedStore(householdsStore),
+  () => hydrateSyncedStore(guestsStore),
+  () => hydrateSyncedStore(travelSegmentsStore),
+  () => hydrateSyncedStore(hotelsStore),
+  () => hydrateSyncedStore(roomTypesStore),
+  () => hydrateSyncedStore(roomsStore),
+  () => hydrateSyncedStore(roomAssignmentsStore),
+  () => hydrateSyncedStore(vehiclesStore),
+  () => hydrateSyncedStore(driversStore),
+  () => hydrateSyncedStore(transportRoutesStore),
+  () => hydrateSyncedStore(transportAssignmentsStore),
+  () => hydrateSyncedStore(vendorsStore),
+  () => hydrateSyncedStore(vendorContactsStore),
+  () => hydrateSyncedStore(vendorQuotesStore),
+  () => hydrateSyncedStore(contractsStore),
+  () => hydrateSyncedStore(budgetCategoriesStore),
+  () => hydrateSyncedStore(budgetItemsStore),
+  () => hydrateSyncedStore(paymentSchedulesStore),
+  () => hydrateSyncedStore(paymentsStore),
+  () => hydrateSyncedStore(refundsStore),
+  () => hydrateSyncedStore(churchProfilesStore),
+  () => hydrateSyncedStore(churchRequirementsStore),
+  () => hydrateSyncedStore(ceremonyParticipantsStore),
+  () => hydrateSyncedStore(ceremonySequenceItemsStore),
+  () => hydrateSyncedStore(ceremonyItemsStore),
+  () => hydrateSyncedStore(cateringPlansStore),
+  () => hydrateSyncedStore(menuItemsStore),
+  () => hydrateSyncedStore(decorPlansStore),
+  () => hydrateSyncedStore(decorDeliverablesStore),
+  () => hydrateSyncedStore(attireProfilesStore),
+  () => hydrateSyncedStore(attireItemsStore),
+  () => hydrateSyncedStore(groomingAppointmentsStore),
+  () => hydrateSyncedStore(photographyPlansStore),
+  () => hydrateSyncedStore(photoGroupsStore),
+  () => hydrateSyncedStore(musicCuesStore),
+  () => hydrateSyncedStore(musicAVPlansStore),
+  () => hydrateSyncedStore(giftPlansStore),
+  () => hydrateSyncedStore(welcomeKitsStore),
+  () => hydrateSyncedStore(welcomeKitItemsStore),
+  () => hydrateSyncedStore(runSheetItemsStore),
+  () => hydrateSyncedStore(liveIssuesStore),
+  () => hydrateSyncedStore(dutyAssignmentsStore),
+  () => hydrateSyncedStore(vendorDayStatusesStore),
+  () => hydrateSyncedStore(ceremonyItemMovementsStore),
+  () => hydrateSyncedStore(emergencyContactsStore),
+  () => hydrateSyncedStore(emergencyResponseCardsStore),
+  () => hydrateSyncedStore(closeoutItemsStore),
+  () => hydrateSyncedStore(finalReadinessReviewsStore),
+  () => hydrateSyncedStore(guestOperationalStatusesStore),
+  () => hydrateSyncedStore(manifestFreezeStatesStore),
+];
+
+/** Fetches every workspace-scoped collection from Supabase and replaces the local cache with it. Called once after workspace selection/switch. */
+export async function hydrateAllSyncedStores(): Promise<void> {
+  await Promise.all(SYNCED_STORE_HYDRATORS.map((hydrate) => hydrate()));
 }

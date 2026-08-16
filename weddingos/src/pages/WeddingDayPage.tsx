@@ -11,8 +11,10 @@ import { EmergencyView } from '@/features/weddingday/EmergencyView';
 import { CloseoutView } from '@/features/weddingday/CloseoutView';
 import { CommandSheetView } from '@/features/weddingday/CommandSheetView';
 import { OfflinePackView } from '@/features/weddingday/OfflinePackView';
+import { useWeddingDayRealtime } from '@/hooks/useWeddingDayRealtime';
 
 export function WeddingDayPage() {
+  useWeddingDayRealtime();
   return (
     <div className="space-y-4">
       <div className="no-print flex flex-wrap items-start justify-between gap-3">

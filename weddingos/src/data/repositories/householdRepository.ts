@@ -1,5 +1,6 @@
 import type { Household } from '@/types';
 import { generateId } from '@/lib/id';
+import { logAuditAction } from '@/data/supabase/auditLogRepository';
 import { guestsStore, householdsStore } from '../stores';
 
 export type NewHouseholdInput = Omit<Household, 'id' | 'createdAt' | 'updatedAt' | 'invitedEvents' | 'invitationMethod'> &
@@ -35,6 +36,14 @@ export function countGuestsForHousehold(householdId: string): number {
 
 /** Deletes a household and cascades — every guest belonging to it is deleted too. */
 export function deleteHousehold(id: string): void {
+  const household = householdsStore.get().find((h) => h.id === id);
+  const guestCount = countGuestsForHousehold(id);
   householdsStore.set((prev) => prev.filter((household) => household.id !== id));
   guestsStore.set((prev) => prev.filter((guest) => guest.householdId !== id));
+  logAuditAction({
+    action: 'household.delete',
+    entityType: 'Household',
+    entityId: id,
+    summary: `Deleted household "${household?.householdName ?? id}" (${guestCount} guest${guestCount === 1 ? '' : 's'})`,
+  });
 }

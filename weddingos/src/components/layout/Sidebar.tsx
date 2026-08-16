@@ -5,9 +5,13 @@ import { APP_NAME, APP_SUBTITLE } from '@/lib/constants';
 import { cn } from '@/lib/cn';
 import { useSettings } from '@/hooks/useSettings';
 import { getCountdown } from '@/utils/countdown';
+import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 export function Sidebar() {
   const { settings } = useSettings();
+  const { supabaseEnabled } = useAuth();
+  const { currentWorkspace } = useWorkspace();
   const weddingCountdown = getCountdown(settings.wedding.date);
 
   return (
@@ -18,8 +22,19 @@ export function Sidebar() {
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-ink leading-tight">{APP_NAME}</p>
-          <p className="text-xs text-ink-faint leading-tight truncate">{APP_SUBTITLE}</p>
+          {supabaseEnabled ? (
+            <p className="text-xs text-ink-faint leading-tight truncate" title={currentWorkspace?.name}>
+              {currentWorkspace?.name ?? APP_SUBTITLE}
+            </p>
+          ) : (
+            <p className="text-xs text-ink-faint leading-tight truncate">{APP_SUBTITLE}</p>
+          )}
         </div>
+        {!supabaseEnabled && (
+          <span className="ml-auto shrink-0 rounded-md border border-line-soft bg-surface-subtle px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-ink-faint uppercase">
+            Demo
+          </span>
+        )}
       </div>
 
       <nav className="flex-1 px-3 py-2" aria-label="Primary">

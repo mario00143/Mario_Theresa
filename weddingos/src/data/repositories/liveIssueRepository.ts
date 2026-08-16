@@ -1,5 +1,6 @@
 import type { LiveIssue, LiveIssueSeverity, LiveIssueStatus } from '@/types';
 import { generateId } from '@/lib/id';
+import { logAuditAction } from '@/data/supabase/auditLogRepository';
 import { liveIssuesStore } from '../stores';
 
 export type NewLiveIssueInput = Omit<LiveIssue, 'id' | 'createdAt' | 'updatedAt' | 'reportedAt' | 'followUpRequired'> &
@@ -32,7 +33,15 @@ export function deleteLiveIssue(id: string): void {
 }
 
 export function escalateLiveIssue(id: string, severity: LiveIssueSeverity): void {
+  const previous = liveIssuesStore.get().find((i) => i.id === id);
   updateLiveIssue(id, { severity });
+  logAuditAction({
+    action: 'liveIssue.severity_change',
+    entityType: 'LiveIssue',
+    entityId: id,
+    summary: `Changed severity of "${previous?.title ?? id}" from ${previous?.severity ?? '?'} to ${severity}`,
+    metadata: { fromSeverity: previous?.severity ?? null, toSeverity: severity },
+  });
 }
 
 export function assignLiveIssueOwner(id: string, owner: string, backupOwner?: string): void {

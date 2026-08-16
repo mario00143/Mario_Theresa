@@ -1,5 +1,6 @@
 import type { Payment } from '@/types';
 import { generateId } from '@/lib/id';
+import { logAuditAction } from '@/data/supabase/auditLogRepository';
 import { budgetItemsStore, paymentSchedulesStore, paymentsStore, vendorsStore } from '../stores';
 
 export type NewPaymentInput = Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>;
@@ -52,6 +53,13 @@ export function addPayment(input: NewPaymentInput): Payment {
   const timestamp = nowISO();
   const payment: Payment = { ...input, id: generateId('payment'), createdAt: timestamp, updatedAt: timestamp };
   paymentsStore.set((prev) => [...prev, payment]);
+  logAuditAction({
+    action: 'payment.create',
+    entityType: 'Payment',
+    entityId: payment.id,
+    summary: `Recorded a payment of ${payment.amount} via ${payment.paymentMethod}`,
+    metadata: { amount: payment.amount, vendorId: payment.vendorId },
+  });
   return payment;
 }
 
@@ -67,8 +75,10 @@ export function updatePayment(id: string, patch: Partial<Omit<Payment, 'id' | 'c
   }
 
   paymentsStore.set((prev) => prev.map((p) => (p.id === id ? { ...next, updatedAt: nowISO() } : p)));
+  logAuditAction({ action: 'payment.update', entityType: 'Payment', entityId: id, summary: `Updated payment ${id}`, metadata: { patch: JSON.stringify(patch).slice(0, 200) } });
 }
 
 export function deletePayment(id: string): void {
   paymentsStore.set((prev) => prev.filter((p) => p.id !== id));
+  logAuditAction({ action: 'payment.delete', entityType: 'Payment', entityId: id, summary: `Deleted payment ${id}` });
 }

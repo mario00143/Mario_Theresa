@@ -51,6 +51,7 @@ import type { CloseoutItem } from './closeoutItem';
 import type { FinalReadinessReview } from './finalReadinessReview';
 import type { GuestOperationalStatus } from './guestOperationalStatus';
 import type { ManifestFreezeState } from './manifestFreezeState';
+import type { DocumentRecord } from './documentRecord';
 
 /**
  * Version 1: settings/tasks/decisions/owners only (Phase 1).
@@ -62,14 +63,40 @@ import type { ManifestFreezeState } from './manifestFreezeState';
  * duty roster, vendor day-of status, ceremony item movements, emergency
  * contacts/response cards, closeout checklist, final readiness reviews,
  * guest operational statuses, manifest freeze states (Phase 6).
+ * Version 7: adds optional workspace metadata and document metadata,
+ * populated only when exported from an active Supabase workspace (Phase
+ * 7) — both are undefined for a pure Demo/Local Mode export, which stays
+ * functionally identical to a v6 backup. Never includes auth credentials,
+ * password hashes, invite token secrets, or signed URLs — see
+ * data/supabase/backupV7.ts for the Supabase-aware export/import that adds
+ * these fields; backupRepository.ts's plain exportBackup()/importBackup()
+ * remain the pure-localStorage v1-v7 path used by Demo Mode and by the
+ * migration wizard's local-data read.
  * Older files still import successfully — see backupRepository.normalizeBackup
  * — with the collections introduced after their version initialized empty.
  */
-export const BACKUP_VERSION = 6;
+export const BACKUP_VERSION = 7;
+
+export interface WeddingOSBackupWorkspaceMeta {
+  name: string;
+  slug: string;
+  groomName: string;
+  brideName: string;
+  timezone: string;
+  currency: string;
+  engagementDate?: string;
+  weddingDate?: string;
+}
 
 export interface WeddingOSBackup {
   version: number;
   exportedAt: string;
+  /** Present only for a backup exported while a Supabase workspace was active. */
+  workspace?: WeddingOSBackupWorkspaceMeta;
+  /** Document metadata only (never binary file contents) — present only for a Supabase-workspace export by a role permitted to read documents. */
+  documents?: DocumentRecord[];
+  /** Set when a Supabase-workspace export omitted finance data because the exporting role cannot read it (section 60). */
+  redactedSections?: string[];
   settings: AppSettings;
   tasks: Task[];
   decisions: Decision[];
