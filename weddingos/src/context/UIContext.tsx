@@ -23,6 +23,10 @@ interface UIContextValue {
   openTravelDetail: (travelSegmentId: string) => void;
   closeTravelDetail: () => void;
 
+  selectedVendorId: string | null;
+  openVendorDetail: (vendorId: string) => void;
+  closeVendorDetail: () => void;
+
   quickAddOpen: boolean;
   quickAddMode: QuickAddMode;
   openQuickAdd: (mode?: QuickAddMode) => void;
@@ -41,6 +45,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [selectedHouseholdId, setSelectedHouseholdId] = useState<string | null>(null);
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null);
   const [selectedTravelSegmentId, setSelectedTravelSegmentId] = useState<string | null>(null);
+  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickAddMode, setQuickAddMode] = useState<QuickAddMode>('task');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -59,6 +64,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
   const openTravelDetail = useCallback((travelSegmentId: string) => setSelectedTravelSegmentId(travelSegmentId), []);
   const closeTravelDetail = useCallback(() => setSelectedTravelSegmentId(null), []);
+
+  const openVendorDetail = useCallback((vendorId: string) => setSelectedVendorId(vendorId), []);
+  const closeVendorDetail = useCallback(() => setSelectedVendorId(null), []);
 
   const openQuickAdd = useCallback((mode: QuickAddMode = 'task') => {
     setQuickAddMode(mode);
@@ -86,6 +94,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
       selectedTravelSegmentId,
       openTravelDetail,
       closeTravelDetail,
+      selectedVendorId,
+      openVendorDetail,
+      closeVendorDetail,
       quickAddOpen,
       quickAddMode,
       openQuickAdd,
@@ -110,6 +121,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
       selectedTravelSegmentId,
       openTravelDetail,
       closeTravelDetail,
+      selectedVendorId,
+      openVendorDetail,
+      closeVendorDetail,
       quickAddOpen,
       quickAddMode,
       openQuickAdd,
