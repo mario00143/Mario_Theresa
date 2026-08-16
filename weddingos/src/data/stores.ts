@@ -1,11 +1,17 @@
 import type {
   AppSettings,
+  BudgetCategory,
+  BudgetItem,
+  Contract,
   Decision,
   Driver,
   Guest,
   Hotel,
   Household,
   Owner,
+  Payment,
+  PaymentSchedule,
+  Refund,
   Room,
   RoomAssignment,
   RoomType,
@@ -14,6 +20,9 @@ import type {
   TransportRoute,
   TravelSegment,
   Vehicle,
+  Vendor,
+  VendorContact,
+  VendorQuote,
 } from '@/types';
 import { createStore } from '@/lib/store';
 import { readJSON, STORAGE_KEYS, writeJSON } from '@/lib/storage';
@@ -44,6 +53,15 @@ function ensureSeeded(): void {
   writeJSON(STORAGE_KEYS.drivers, bundle.drivers);
   writeJSON(STORAGE_KEYS.transportRoutes, bundle.transportRoutes);
   writeJSON(STORAGE_KEYS.transportAssignments, bundle.transportAssignments);
+  writeJSON(STORAGE_KEYS.vendors, bundle.vendors);
+  writeJSON(STORAGE_KEYS.vendorContacts, bundle.vendorContacts);
+  writeJSON(STORAGE_KEYS.vendorQuotes, bundle.vendorQuotes);
+  writeJSON(STORAGE_KEYS.contracts, bundle.contracts);
+  writeJSON(STORAGE_KEYS.budgetCategories, bundle.budgetCategories);
+  writeJSON(STORAGE_KEYS.budgetItems, bundle.budgetItems);
+  writeJSON(STORAGE_KEYS.paymentSchedules, bundle.paymentSchedules);
+  writeJSON(STORAGE_KEYS.payments, bundle.payments);
+  writeJSON(STORAGE_KEYS.refunds, bundle.refunds);
   writeJSON(STORAGE_KEYS.seeded, true);
 }
 
@@ -64,6 +82,15 @@ export const vehiclesStore = createStore<Vehicle[]>(STORAGE_KEYS.vehicles, []);
 export const driversStore = createStore<Driver[]>(STORAGE_KEYS.drivers, []);
 export const transportRoutesStore = createStore<TransportRoute[]>(STORAGE_KEYS.transportRoutes, []);
 export const transportAssignmentsStore = createStore<TransportAssignment[]>(STORAGE_KEYS.transportAssignments, []);
+export const vendorsStore = createStore<Vendor[]>(STORAGE_KEYS.vendors, []);
+export const vendorContactsStore = createStore<VendorContact[]>(STORAGE_KEYS.vendorContacts, []);
+export const vendorQuotesStore = createStore<VendorQuote[]>(STORAGE_KEYS.vendorQuotes, []);
+export const contractsStore = createStore<Contract[]>(STORAGE_KEYS.contracts, []);
+export const budgetCategoriesStore = createStore<BudgetCategory[]>(STORAGE_KEYS.budgetCategories, []);
+export const budgetItemsStore = createStore<BudgetItem[]>(STORAGE_KEYS.budgetItems, []);
+export const paymentSchedulesStore = createStore<PaymentSchedule[]>(STORAGE_KEYS.paymentSchedules, []);
+export const paymentsStore = createStore<Payment[]>(STORAGE_KEYS.payments, []);
+export const refundsStore = createStore<Refund[]>(STORAGE_KEYS.refunds, []);
 
 function seedSettingsFallback(): AppSettings {
   // ensureSeeded() above guarantees settings already exist in storage by this point;
@@ -89,5 +116,14 @@ export function resetToDemoData(): void {
   driversStore.set(bundle.drivers);
   transportRoutesStore.set(bundle.transportRoutes);
   transportAssignmentsStore.set(bundle.transportAssignments);
+  vendorsStore.set(bundle.vendors);
+  vendorContactsStore.set(bundle.vendorContacts);
+  vendorQuotesStore.set(bundle.vendorQuotes);
+  contractsStore.set(bundle.contracts);
+  budgetCategoriesStore.set(bundle.budgetCategories);
+  budgetItemsStore.set(bundle.budgetItems);
+  paymentSchedulesStore.set(bundle.paymentSchedules);
+  paymentsStore.set(bundle.payments);
+  refundsStore.set(bundle.refunds);
   writeJSON(STORAGE_KEYS.seeded, true);
 }

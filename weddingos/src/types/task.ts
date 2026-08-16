@@ -66,6 +66,13 @@ export interface Task {
   tags: string[];
   notes?: string;
   subtasks: Subtask[];
+
+  // Optional links into Phase 4 vendor/finance records — never mandatory.
+  relatedVendorId?: string;
+  relatedBudgetItemId?: string;
+  relatedPaymentScheduleId?: string;
+  relatedContractId?: string;
+
   createdAt: string;
   updatedAt: string;
 }

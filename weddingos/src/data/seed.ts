@@ -1,11 +1,17 @@
 import type {
   AppSettings,
+  BudgetCategory,
+  BudgetItem,
+  Contract,
   Decision,
   Driver,
   Guest,
   Hotel,
   Household,
   Owner,
+  Payment,
+  PaymentSchedule,
+  Refund,
   Room,
   RoomAssignment,
   RoomType,
@@ -14,6 +20,9 @@ import type {
   TransportRoute,
   TravelSegment,
   Vehicle,
+  Vendor,
+  VendorContact,
+  VendorQuote,
 } from '@/types';
 import { seedOwners } from './owners.seed';
 import { seedSettings } from './settings.seed';
@@ -21,6 +30,7 @@ import { buildSeedTasks } from './tasks.seed';
 import { buildSeedDecisions } from './decisions.seed';
 import { buildSeedHouseholdsAndGuests } from './households.seed';
 import { buildSeedLogistics } from './logistics.seed';
+import { buildSeedFinance } from './finance.seed';
 
 export interface SeedBundle {
   settings: AppSettings;
@@ -38,6 +48,15 @@ export interface SeedBundle {
   drivers: Driver[];
   transportRoutes: TransportRoute[];
   transportAssignments: TransportAssignment[];
+  vendors: Vendor[];
+  vendorContacts: VendorContact[];
+  vendorQuotes: VendorQuote[];
+  contracts: Contract[];
+  budgetCategories: BudgetCategory[];
+  budgetItems: BudgetItem[];
+  paymentSchedules: PaymentSchedule[];
+  payments: Payment[];
+  refunds: Refund[];
 }
 
 export function createSeedBundle(): SeedBundle {
@@ -45,6 +64,7 @@ export function createSeedBundle(): SeedBundle {
   const decisions = buildSeedDecisions(idByKey);
   const { households, guests } = buildSeedHouseholdsAndGuests();
   const logistics = buildSeedLogistics(households, guests);
+  const finance = buildSeedFinance(households, guests, logistics.hotels, logistics.vehicles);
   return {
     settings: seedSettings(),
     tasks,
@@ -53,5 +73,6 @@ export function createSeedBundle(): SeedBundle {
     households,
     guests,
     ...logistics,
+    ...finance,
   };
 }

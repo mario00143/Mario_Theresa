@@ -25,6 +25,9 @@ export interface Hotel {
   groupBookingReference?: string;
   bookingOwner?: string;
 
+  /** Deliberate, optional link to a commercial Vendor record — never set automatically. */
+  vendorId?: string;
+
   createdAt: string;
   updatedAt: string;
 }

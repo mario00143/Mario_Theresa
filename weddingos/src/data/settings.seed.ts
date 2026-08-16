@@ -1,5 +1,13 @@
 import type { AppSettings } from '@/types';
-import { DEFAULT_CURRENCY, ENGAGEMENT_DATE, TIMEZONE, WEDDING_DATE } from '@/lib/constants';
+import {
+  DEFAULT_BUDGET_VARIANCE_WARNING_PERCENT,
+  DEFAULT_CRITICAL_VENDOR_CATEGORIES,
+  DEFAULT_CURRENCY,
+  DEFAULT_LARGE_CASH_WARNING_THRESHOLD,
+  ENGAGEMENT_DATE,
+  TIMEZONE,
+  WEDDING_DATE,
+} from '@/lib/constants';
 
 export function seedSettings(): AppSettings {
   return {
@@ -28,6 +36,12 @@ export function seedSettings(): AppSettings {
       overallBudget: 4500000,
       currency: DEFAULT_CURRENCY,
       timezone: TIMEZONE,
+    },
+    finance: {
+      currency: DEFAULT_CURRENCY,
+      largeCashWarningThreshold: DEFAULT_LARGE_CASH_WARNING_THRESHOLD,
+      budgetVarianceWarningPercent: DEFAULT_BUDGET_VARIANCE_WARNING_PERCENT,
+      criticalVendorCategories: [...DEFAULT_CRITICAL_VENDOR_CATEGORIES],
     },
   };
 }

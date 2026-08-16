@@ -1,3 +1,5 @@
+import type { VendorCategory } from './vendor';
+
 export const DENOMINATIONS = [
   'To Be Confirmed',
   'Roman Catholic',
@@ -42,9 +44,20 @@ export interface WeddingDetailsSettings {
   timezone: string;
 }
 
+export interface FinanceSettings {
+  currency: string;
+  /** Cash payments at or above this amount trigger a large-cash warning. */
+  largeCashWarningThreshold: number;
+  /** A budget category's forecast exceeding its plan by this percentage or more is flagged. */
+  budgetVarianceWarningPercent: number;
+  /** Vendor categories treated as critical for the 72-hour reconfirmation alert. */
+  criticalVendorCategories: VendorCategory[];
+}
+
 export interface AppSettings {
   couple: CoupleSettings;
   engagement: EngagementSettings;
   wedding: WeddingSettings;
   weddingDetails: WeddingDetailsSettings;
+  finance: FinanceSettings;
 }

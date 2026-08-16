@@ -13,15 +13,15 @@ import {
 } from '@/data/stores';
 import { BACKUP_VERSION } from '@/types';
 
-describe('version 3 backup export', () => {
+describe('version 3+ backup export', () => {
   beforeEach(() => {
     resetToDemoData();
   });
 
-  it('exports version 3 with all logistics collections included', () => {
+  it('exports the current version with all logistics collections included', () => {
     const backup = exportBackup();
-    expect(backup.version).toBe(3);
-    expect(BACKUP_VERSION).toBe(3);
+    expect(backup.version).toBe(BACKUP_VERSION);
+    expect(BACKUP_VERSION).toBeGreaterThanOrEqual(3);
     expect(backup.travelSegments.length).toBeGreaterThan(0);
     expect(backup.hotels.length).toBeGreaterThan(0);
     expect(backup.roomTypes.length).toBeGreaterThan(0);

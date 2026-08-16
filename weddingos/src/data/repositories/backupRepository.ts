@@ -1,5 +1,8 @@
 import type {
   AppSettings,
+  BudgetCategory,
+  BudgetItem,
+  Contract,
   Decision,
   Driver,
   Guest,
@@ -7,6 +10,9 @@ import type {
   Hotel,
   Household,
   Owner,
+  Payment,
+  PaymentSchedule,
+  Refund,
   Room,
   RoomAssignment,
   RoomType,
@@ -15,18 +21,29 @@ import type {
   TransportRoute,
   TravelSegment,
   Vehicle,
+  Vendor,
+  VendorContact,
+  VendorQuote,
   WeddingOSBackup,
 } from '@/types';
 import {
   AGE_CATEGORIES,
+  APPROVAL_STATUSES,
   BACKUP_VERSION,
+  CONTRACT_STATUSES,
   DENOMINATIONS,
   DECISION_STATUSES,
   DIETARY_PREFERENCES,
   EVENTS,
   HOUSEHOLD_SIDES,
   INVITATION_STATUSES,
+  PAYMENT_METHODS,
+  PAYMENT_SCHEDULE_STATUSES,
+  PREFERRED_CONTACT_METHODS,
   PRIORITIES,
+  QUOTE_STATUSES,
+  REFUND_STATUSES,
+  REFUND_TYPES,
   ROOM_ASSIGNMENT_STATUSES,
   ROOM_STATUSES,
   ROUTE_STATUSES,
@@ -38,14 +55,21 @@ import {
   TRAVEL_MODES,
   VEHICLE_STATUSES,
   VEHICLE_TYPES,
+  VENDOR_STATUSES,
 } from '@/types';
 import {
+  budgetCategoriesStore,
+  budgetItemsStore,
+  contractsStore,
   decisionsStore,
   driversStore,
   guestsStore,
   hotelsStore,
   householdsStore,
   ownersStore,
+  paymentSchedulesStore,
+  paymentsStore,
+  refundsStore,
   roomAssignmentsStore,
   roomTypesStore,
   roomsStore,
@@ -55,6 +79,9 @@ import {
   transportRoutesStore,
   travelSegmentsStore,
   vehiclesStore,
+  vendorContactsStore,
+  vendorQuotesStore,
+  vendorsStore,
 } from '../stores';
 
 export function exportBackup(): WeddingOSBackup {
@@ -76,6 +103,15 @@ export function exportBackup(): WeddingOSBackup {
     drivers: driversStore.get(),
     transportRoutes: transportRoutesStore.get(),
     transportAssignments: transportAssignmentsStore.get(),
+    vendors: vendorsStore.get(),
+    vendorContacts: vendorContactsStore.get(),
+    vendorQuotes: vendorQuotesStore.get(),
+    contracts: contractsStore.get(),
+    budgetCategories: budgetCategoriesStore.get(),
+    budgetItems: budgetItemsStore.get(),
+    paymentSchedules: paymentSchedulesStore.get(),
+    payments: paymentsStore.get(),
+    refunds: refundsStore.get(),
   };
 }
 
@@ -210,12 +246,85 @@ function isValidTransportAssignment(value: unknown): value is TransportAssignmen
   return true;
 }
 
+function isValidVendor(value: unknown): value is Vendor {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.name !== 'string') return false;
+  if (!VENDOR_STATUSES.includes(value.status as (typeof VENDOR_STATUSES)[number])) return false;
+  if (typeof value.gstApplicable !== 'boolean') return false;
+  if (typeof value.finalPrimaryContactConfirmed !== 'boolean' || typeof value.finalBackupContactConfirmed !== 'boolean') return false;
+  return true;
+}
+
+function isValidVendorContact(value: unknown): value is VendorContact {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.vendorId !== 'string' || typeof value.name !== 'string') return false;
+  if (!PREFERRED_CONTACT_METHODS.includes(value.preferredContactMethod as (typeof PREFERRED_CONTACT_METHODS)[number])) return false;
+  return true;
+}
+
+function isValidVendorQuote(value: unknown): value is VendorQuote {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.vendorId !== 'string') return false;
+  if (!QUOTE_STATUSES.includes(value.status as (typeof QUOTE_STATUSES)[number])) return false;
+  if (typeof value.baseAmount !== 'number' || typeof value.totalAmount !== 'number') return false;
+  if (typeof value.isSelected !== 'boolean') return false;
+  return true;
+}
+
+function isValidContract(value: unknown): value is Contract {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.vendorId !== 'string') return false;
+  if (!CONTRACT_STATUSES.includes(value.status as (typeof CONTRACT_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidBudgetCategory(value: unknown): value is BudgetCategory {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.name !== 'string') return false;
+  if (typeof value.plannedAmount !== 'number' || typeof value.contingencyAmount !== 'number') return false;
+  return true;
+}
+
+function isValidBudgetItem(value: unknown): value is BudgetItem {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.categoryId !== 'string' || typeof value.itemName !== 'string') return false;
+  if (!APPROVAL_STATUSES.includes(value.approvalStatus as (typeof APPROVAL_STATUSES)[number])) return false;
+  if (typeof value.originalBudget !== 'number') return false;
+  return true;
+}
+
+function isValidPaymentSchedule(value: unknown): value is PaymentSchedule {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.vendorId !== 'string' || typeof value.milestone !== 'string') return false;
+  if (!PAYMENT_SCHEDULE_STATUSES.includes(value.status as (typeof PAYMENT_SCHEDULE_STATUSES)[number])) return false;
+  if (typeof value.amount !== 'number') return false;
+  return true;
+}
+
+function isValidPayment(value: unknown): value is Payment {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.vendorId !== 'string' || typeof value.paymentDate !== 'string') return false;
+  if (!PAYMENT_METHODS.includes(value.paymentMethod as (typeof PAYMENT_METHODS)[number])) return false;
+  if (typeof value.amount !== 'number') return false;
+  if (typeof value.invoiceReceived !== 'boolean' || typeof value.receiptReceived !== 'boolean') return false;
+  return true;
+}
+
+function isValidRefund(value: unknown): value is Refund {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.vendorId !== 'string') return false;
+  if (!REFUND_TYPES.includes(value.refundType as (typeof REFUND_TYPES)[number])) return false;
+  if (!REFUND_STATUSES.includes(value.status as (typeof REFUND_STATUSES)[number])) return false;
+  return true;
+}
+
 /**
  * Accepts version 1 (Phase 1: settings/tasks/decisions/owners only),
- * version 2 (Phase 2: adds households/guests), and version 3 (Phase 3: adds
- * travel/accommodation/transport logistics) backups. Collections introduced
- * after a file's version are optional in that file and are initialized to
- * empty arrays on import (see normalizeBackup).
+ * version 2 (Phase 2: adds households/guests), version 3 (Phase 3: adds
+ * travel/accommodation/transport logistics), and version 4 (Phase 4: adds
+ * vendors/quotes/contracts/budget/payments/refunds) backups. Collections
+ * introduced after a file's version are optional in that file and are
+ * initialized to empty arrays on import (see normalizeBackup).
  */
 export function validateBackup(data: unknown): BackupValidationResult {
   const errors: string[] = [];
@@ -274,6 +383,24 @@ export function validateBackup(data: unknown): BackupValidationResult {
     }
   }
 
+  const isV4OrLater = version !== null && version >= 4;
+  const financeFields: Array<[key: string, validator: (v: unknown) => boolean, label: string]> = [
+    ['vendors', (v) => Array.isArray(v) && v.every(isValidVendor), 'Vendors'],
+    ['vendorContacts', (v) => Array.isArray(v) && v.every(isValidVendorContact), 'Vendor contacts'],
+    ['vendorQuotes', (v) => Array.isArray(v) && v.every(isValidVendorQuote), 'Vendor quotes'],
+    ['contracts', (v) => Array.isArray(v) && v.every(isValidContract), 'Contracts'],
+    ['budgetCategories', (v) => Array.isArray(v) && v.every(isValidBudgetCategory), 'Budget categories'],
+    ['budgetItems', (v) => Array.isArray(v) && v.every(isValidBudgetItem), 'Budget items'],
+    ['paymentSchedules', (v) => Array.isArray(v) && v.every(isValidPaymentSchedule), 'Payment schedules'],
+    ['payments', (v) => Array.isArray(v) && v.every(isValidPayment), 'Payments'],
+    ['refunds', (v) => Array.isArray(v) && v.every(isValidRefund), 'Refunds'],
+  ];
+  for (const [key, validator, label] of financeFields) {
+    if ((isV4OrLater || data[key] !== undefined) && !validator(data[key])) {
+      errors.push(`${label} section is missing or contains malformed entries.`);
+    }
+  }
+
   return { valid: errors.length === 0, errors };
 }
 
@@ -302,6 +429,15 @@ export function normalizeBackup(data: unknown): WeddingOSBackup {
     drivers: Array.isArray(raw.drivers) ? (raw.drivers as Driver[]) : [],
     transportRoutes: Array.isArray(raw.transportRoutes) ? (raw.transportRoutes as TransportRoute[]) : [],
     transportAssignments: Array.isArray(raw.transportAssignments) ? (raw.transportAssignments as TransportAssignment[]) : [],
+    vendors: Array.isArray(raw.vendors) ? (raw.vendors as Vendor[]) : [],
+    vendorContacts: Array.isArray(raw.vendorContacts) ? (raw.vendorContacts as VendorContact[]) : [],
+    vendorQuotes: Array.isArray(raw.vendorQuotes) ? (raw.vendorQuotes as VendorQuote[]) : [],
+    contracts: Array.isArray(raw.contracts) ? (raw.contracts as Contract[]) : [],
+    budgetCategories: Array.isArray(raw.budgetCategories) ? (raw.budgetCategories as BudgetCategory[]) : [],
+    budgetItems: Array.isArray(raw.budgetItems) ? (raw.budgetItems as BudgetItem[]) : [],
+    paymentSchedules: Array.isArray(raw.paymentSchedules) ? (raw.paymentSchedules as PaymentSchedule[]) : [],
+    payments: Array.isArray(raw.payments) ? (raw.payments as Payment[]) : [],
+    refunds: Array.isArray(raw.refunds) ? (raw.refunds as Refund[]) : [],
   };
 }
 
@@ -322,6 +458,15 @@ export function importBackup(backup: WeddingOSBackup): void {
   driversStore.set(backup.drivers ?? []);
   transportRoutesStore.set(backup.transportRoutes ?? []);
   transportAssignmentsStore.set(backup.transportAssignments ?? []);
+  vendorsStore.set(backup.vendors ?? []);
+  vendorContactsStore.set(backup.vendorContacts ?? []);
+  vendorQuotesStore.set(backup.vendorQuotes ?? []);
+  contractsStore.set(backup.contracts ?? []);
+  budgetCategoriesStore.set(backup.budgetCategories ?? []);
+  budgetItemsStore.set(backup.budgetItems ?? []);
+  paymentSchedulesStore.set(backup.paymentSchedules ?? []);
+  paymentsStore.set(backup.payments ?? []);
+  refundsStore.set(backup.refunds ?? []);
 }
 
 function csvEscape(value: string | number | undefined | null): string {

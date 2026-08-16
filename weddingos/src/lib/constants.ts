@@ -17,3 +17,19 @@ export const DUE_SOON_LONG_DAYS = 14;
 
 export const APP_NAME = 'WeddingOS';
 export const APP_SUBTITLE = 'Wedding Command Center';
+
+export const DEFAULT_LARGE_CASH_WARNING_THRESHOLD = 50000;
+export const DEFAULT_BUDGET_VARIANCE_WARNING_PERCENT = 10;
+/** Vendor categories critical enough to require reconfirmation within 72 hours of the wedding. */
+export const DEFAULT_CRITICAL_VENDOR_CATEGORIES = [
+  'Church / Parish',
+  'Reception Venue',
+  'Catering',
+  'Décor',
+  'Lighting',
+  'Sound / AV',
+  'Photography',
+  'Videography',
+  'Transportation',
+] as const;
+export const CRITICAL_VENDOR_RECONFIRMATION_HOURS = 72;

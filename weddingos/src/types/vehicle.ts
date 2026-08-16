@@ -25,6 +25,8 @@ export interface Vehicle {
   status: VehicleStatus;
   /** True if this vehicle is kept in reserve rather than on the primary schedule. */
   backupVehicle: boolean;
+  /** Deliberate, optional link to a commercial Vendor record — never set automatically. */
+  vendorId?: string;
   notes?: string;
   createdAt: string;
   updatedAt: string;

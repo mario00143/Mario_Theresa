@@ -10,6 +10,7 @@ import {
   PROTECTED_PERIOD_END,
   PROTECTED_PERIOD_START,
 } from '@/lib/constants';
+import type { AppSettings } from '@/types';
 
 /** Parse an ISO ("yyyy-MM-dd" or full ISO) date string into a Date, or null if invalid/empty. */
 export function parseDate(value: string | undefined | null): Date | null {
@@ -55,4 +56,10 @@ export function isSameISODate(a: string | undefined | null, b: string | undefine
   const db = parseDate(b);
   if (!da || !db) return false;
   return todayISO(da) === todayISO(db);
+}
+
+/** Combines the wedding date and ceremony time into a single ISO datetime, for reconfirmation-window math. */
+export function weddingDateTimeISO(settings: Pick<AppSettings, 'wedding'>): string {
+  const time = settings.wedding.ceremonyTime || '00:00';
+  return `${settings.wedding.date}T${time}:00`;
 }

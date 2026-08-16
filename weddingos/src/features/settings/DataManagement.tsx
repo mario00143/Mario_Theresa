@@ -30,6 +30,24 @@ import {
   vehicleManifestCsvFilename,
   vehicleManifestToCSV,
 } from '@/data/repositories/backupRepository';
+import {
+  budgetCsvFilename,
+  budgetToCSV,
+  contractsCsvFilename,
+  contractsToCSV,
+  paymentHistoryCsvFilename,
+  paymentHistoryToCSV,
+  paymentsDueCsvFilename,
+  paymentsDueToCSV,
+  refundsCsvFilename,
+  refundsToCSV,
+  vendorQuotesCsvFilename,
+  vendorQuotesToCSV,
+  vendorReadinessCsvFilename,
+  vendorReadinessToCSV,
+  vendorsCsvFilename,
+  vendorsToCSV,
+} from '@/data/repositories/financeCsv';
 import { resetToDemoData } from '@/data/stores';
 import { useTasks } from '@/hooks/useTasks';
 import { useHouseholds } from '@/hooks/useHouseholds';
@@ -42,6 +60,14 @@ import { useVehicles } from '@/hooks/useVehicles';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useTransportRoutes } from '@/hooks/useTransportRoutes';
 import { useTransportAssignments } from '@/hooks/useTransportAssignments';
+import { useVendors } from '@/hooks/useVendors';
+import { useVendorContacts } from '@/hooks/useVendorContacts';
+import { useVendorQuotes } from '@/hooks/useVendorQuotes';
+import { useContracts } from '@/hooks/useContracts';
+import { useBudgetCategories, useBudgetItems } from '@/hooks/useBudget';
+import { usePaymentSchedules } from '@/hooks/usePaymentSchedules';
+import { usePayments } from '@/hooks/usePayments';
+import { useRefunds } from '@/hooks/useRefunds';
 import { downloadTextFile } from '@/utils/download';
 import type { WeddingOSBackup } from '@/types';
 
@@ -58,6 +84,15 @@ export function DataManagement() {
   const { drivers } = useDrivers();
   const { routes } = useTransportRoutes();
   const { transportAssignments } = useTransportAssignments();
+  const { vendors } = useVendors();
+  const { vendorContacts } = useVendorContacts();
+  const { vendorQuotes } = useVendorQuotes();
+  const { contracts } = useContracts();
+  const { budgetCategories } = useBudgetCategories();
+  const { budgetItems } = useBudgetItems();
+  const { paymentSchedules } = usePaymentSchedules();
+  const { payments } = usePayments();
+  const { refunds } = useRefunds();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingImport, setPendingImport] = useState<WeddingOSBackup | null>(null);
   const [importErrors, setImportErrors] = useState<string[]>([]);
@@ -120,6 +155,50 @@ export function DataManagement() {
     setStatus('Driver directory exported as CSV.');
   };
 
+  const handleExportVendorsCSV = () => {
+    downloadTextFile(vendorsCsvFilename(), vendorsToCSV(vendors, vendorContacts), 'text/csv');
+    setStatus('Vendors exported as CSV.');
+  };
+
+  const handleExportVendorQuotesCSV = () => {
+    downloadTextFile(vendorQuotesCsvFilename(), vendorQuotesToCSV(vendorQuotes, vendors), 'text/csv');
+    setStatus('Vendor quotes exported as CSV.');
+  };
+
+  const handleExportContractsCSV = () => {
+    downloadTextFile(contractsCsvFilename(), contractsToCSV(contracts, vendors), 'text/csv');
+    setStatus('Contracts exported as CSV.');
+  };
+
+  const handleExportBudgetCSV = () => {
+    downloadTextFile(budgetCsvFilename(), budgetToCSV(budgetCategories, budgetItems, vendors), 'text/csv');
+    setStatus('Budget exported as CSV.');
+  };
+
+  const handleExportPaymentsDueCSV = () => {
+    downloadTextFile(paymentsDueCsvFilename(), paymentsDueToCSV(paymentSchedules, vendors, payments), 'text/csv');
+    setStatus('Payments due exported as CSV.');
+  };
+
+  const handleExportPaymentHistoryCSV = () => {
+    downloadTextFile(paymentHistoryCsvFilename(), paymentHistoryToCSV(payments, vendors), 'text/csv');
+    setStatus('Payment history exported as CSV.');
+  };
+
+  const handleExportRefundsCSV = () => {
+    downloadTextFile(refundsCsvFilename(), refundsToCSV(refunds, vendors), 'text/csv');
+    setStatus('Refunds exported as CSV.');
+  };
+
+  const handleExportVendorReadinessCSV = () => {
+    downloadTextFile(
+      vendorReadinessCsvFilename(),
+      vendorReadinessToCSV(vendors, vendorContacts, vendorQuotes, contracts, paymentSchedules, payments),
+      'text/csv',
+    );
+    setStatus('Vendor readiness exported as CSV.');
+  };
+
   const handleFileSelected = async (file: File) => {
     setImportErrors([]);
     setStatus(null);
@@ -176,8 +255,8 @@ export function DataManagement() {
         <div>
           <p className="text-sm font-medium text-ink">Backup</p>
           <p className="text-xs text-ink-faint mt-0.5 mb-2.5">
-            Export everything — settings, tasks, decisions, owner roles, households, guests, and travel/accommodation/transport logistics — as a single JSON file.
-            Version 1 (Phase 1) and version 2 (Phase 2) backups can still be imported; collections introduced after a file's version are initialized empty for those files.
+            Export everything — settings, tasks, decisions, owner roles, households, guests, travel/accommodation/transport logistics, and vendors/budget/payments — as a single JSON file.
+            Version 1, 2, and 3 backups from earlier phases can still be imported; collections introduced after a file's version are initialized empty for those files.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportJSON}>
@@ -206,7 +285,9 @@ export function DataManagement() {
 
         <div>
           <p className="text-sm font-medium text-ink">Export CSV</p>
-          <p className="text-xs text-ink-faint mt-0.5 mb-2.5">Spreadsheet-friendly exports for tasks, households, guests, RSVP, and travel/accommodation/transport logistics.</p>
+          <p className="text-xs text-ink-faint mt-0.5 mb-2.5">
+            Spreadsheet-friendly exports for tasks, households, guests, RSVP, travel/accommodation/transport logistics, and vendors/budget/payments.
+          </p>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportTasksCSV}>
               Export tasks (CSV)
@@ -237,6 +318,30 @@ export function DataManagement() {
             </Button>
             <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportDriverDirectoryCSV}>
               Export driver directory (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportVendorsCSV}>
+              Export vendors (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportVendorQuotesCSV}>
+              Export vendor quotes (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportContractsCSV}>
+              Export contracts (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportBudgetCSV}>
+              Export budget (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportPaymentsDueCSV}>
+              Export payments due (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportPaymentHistoryCSV}>
+              Export payment history (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportRefundsCSV}>
+              Export refunds (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportVendorReadinessCSV}>
+              Export vendor readiness (CSV)
             </Button>
           </div>
         </div>
