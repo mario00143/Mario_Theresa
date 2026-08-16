@@ -73,6 +73,17 @@ export interface Task {
   relatedPaymentScheduleId?: string;
   relatedContractId?: string;
 
+  // Optional links into Phase 5 wedding-preparation records — never mandatory.
+  relatedChurchRequirementId?: string;
+  relatedCeremonyParticipantId?: string;
+  relatedCeremonyItemId?: string;
+  relatedCateringPlanId?: string;
+  relatedDecorPlanId?: string;
+  relatedAttireProfileId?: string;
+  relatedPhotographyPlanId?: string;
+  relatedMusicAVPlanId?: string;
+  relatedGiftPlanId?: string;
+
   createdAt: string;
   updatedAt: string;
 }

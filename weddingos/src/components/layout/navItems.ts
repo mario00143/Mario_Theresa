@@ -1,4 +1,4 @@
-import { CalendarDays, ClipboardList, LayoutDashboard, Route, Scale, Settings, Users, Wallet } from 'lucide-react';
+import { CalendarDays, ChurchIcon, ClipboardList, LayoutDashboard, Route, Scale, Settings, Users, Wallet } from 'lucide-react';
 
 export const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -6,6 +6,7 @@ export const NAV_ITEMS = [
   { to: '/guests', label: 'Guests', icon: Users, end: false },
   { to: '/logistics', label: 'Logistics', icon: Route, end: false },
   { to: '/vendors', label: 'Vendors', icon: Wallet, end: false },
+  { to: '/wedding-prep', label: 'Wedding Prep', icon: ChurchIcon, end: false },
   { to: '/calendar', label: 'Calendar', icon: CalendarDays, end: false },
   { to: '/decisions', label: 'Decisions', icon: Scale, end: false },
   { to: '/settings', label: 'Settings', icon: Settings, end: false },

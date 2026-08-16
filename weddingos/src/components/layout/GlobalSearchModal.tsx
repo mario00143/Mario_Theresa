@@ -25,6 +25,15 @@ import { useVendorQuotes } from '@/hooks/useVendorQuotes';
 import { useContracts } from '@/hooks/useContracts';
 import { useBudgetItems } from '@/hooks/useBudget';
 import { usePayments } from '@/hooks/usePayments';
+import { useChurchRequirements } from '@/hooks/useChurchRequirements';
+import { useCeremonyParticipants } from '@/hooks/useCeremonyParticipants';
+import { useCeremonyItems } from '@/hooks/useCeremonyItems';
+import { useDecorPlans } from '@/hooks/useDecorPlans';
+import { useAttireProfiles } from '@/hooks/useAttireProfiles';
+import { usePhotoGroups } from '@/hooks/usePhotoGroups';
+import { useMusicCues } from '@/hooks/useMusicCues';
+import { useGiftPlans } from '@/hooks/useGiftPlans';
+import { useWelcomeKits } from '@/hooks/useWelcomeKits';
 import { searchAll } from '@/utils/search';
 import { formatDisplayDate } from '@/utils/date';
 import { formatCurrency } from '@/utils/currency';
@@ -48,6 +57,15 @@ export function GlobalSearchModal() {
   const { contracts } = useContracts();
   const { budgetItems } = useBudgetItems();
   const { payments } = usePayments();
+  const { churchRequirements } = useChurchRequirements();
+  const { ceremonyParticipants } = useCeremonyParticipants();
+  const { ceremonyItems } = useCeremonyItems();
+  const { decorPlans } = useDecorPlans();
+  const { attireProfiles } = useAttireProfiles();
+  const { photoGroups } = usePhotoGroups();
+  const { musicCues } = useMusicCues();
+  const { giftPlans } = useGiftPlans();
+  const { welcomeKits } = useWelcomeKits();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -61,9 +79,21 @@ export function GlobalSearchModal() {
 
   const results = searchAll(
     tasks, decisions, households, guests, travelSegments, hotels, rooms, vehicles, drivers, routes,
-    vendors, vendorContacts, vendorQuotes, contracts, budgetItems, payments, query,
+    vendors, vendorContacts, vendorQuotes, contracts, budgetItems, payments,
+    churchRequirements, ceremonyParticipants, ceremonyItems, decorPlans, attireProfiles, photoGroups, musicCues, giftPlans, welcomeKits,
+    query,
   );
   const hasQuery = query.trim().length > 0;
+  const weddingPrepCount =
+    results.churchRequirements.length +
+    results.ceremonyParticipants.length +
+    results.ceremonyItems.length +
+    results.decorPlans.length +
+    results.attireProfiles.length +
+    results.photoGroups.length +
+    results.musicCues.length +
+    results.giftPlans.length +
+    results.welcomeKits.length;
   const hasResults =
     results.tasks.length > 0 ||
     results.decisions.length > 0 ||
@@ -79,7 +109,8 @@ export function GlobalSearchModal() {
     results.vendorQuotes.length > 0 ||
     results.contracts.length > 0 ||
     results.budgetItems.length > 0 ||
-    results.payments.length > 0;
+    results.payments.length > 0 ||
+    weddingPrepCount > 0;
   const householdById = new Map(households.map((h) => [h.id, h]));
   const guestById = new Map(guests.map((g) => [g.id, g]));
   const hotelById = new Map(hotels.map((h) => [h.id, h]));
@@ -93,7 +124,7 @@ export function GlobalSearchModal() {
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search tasks, decisions, households, guests, travel, hotels, transport, vendors, budget…"
+          placeholder="Search tasks, decisions, households, guests, travel, hotels, transport, vendors, budget, wedding prep…"
           className="w-full bg-transparent text-sm outline-none placeholder:text-ink-faint"
           aria-label="Search query"
         />
@@ -102,7 +133,7 @@ export function GlobalSearchModal() {
       {!hasQuery && (
         <EmptyState
           title="Start typing to search"
-          description="Search across tasks, decisions, households, guests, travel, hotels, transport, vendors, quotes, contracts, budget items, and payments by name, reference, or route."
+          description="Search across tasks, decisions, households, guests, travel, hotels, transport, vendors, quotes, contracts, budget items, payments, and wedding preparation records by name, reference, or route."
         />
       )}
 
@@ -462,6 +493,170 @@ export function GlobalSearchModal() {
                   <p className="mt-1 text-xs text-ink-faint">
                     {vendorById.get(payment.vendorId)?.name ?? 'Unknown vendor'} · {formatCurrency(payment.amount)}
                   </p>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {hasQuery && weddingPrepCount > 0 && (
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">Wedding Prep ({weddingPrepCount})</p>
+          <ul className="space-y-1">
+            {results.churchRequirements.map((r) => (
+              <li key={r.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-prep/church');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{r.title}</p>
+                    <Badge tone="neutral">Church requirement</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">{r.category} · {r.status}</p>
+                </button>
+              </li>
+            ))}
+            {results.ceremonyParticipants.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-prep/ceremony');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{p.name}</p>
+                    <Badge tone="neutral">{p.role}</Badge>
+                  </div>
+                </button>
+              </li>
+            ))}
+            {results.ceremonyItems.map((i) => (
+              <li key={i.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-prep/ceremony-items');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{i.name}</p>
+                    <Badge tone="neutral">Ceremony item</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">{i.category} · {i.status}</p>
+                </button>
+              </li>
+            ))}
+            {results.decorPlans.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-prep/decor');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{p.area}</p>
+                    <Badge tone="neutral">Décor plan</Badge>
+                  </div>
+                  {p.theme && <p className="mt-1 text-xs text-ink-faint">{p.theme}</p>}
+                </button>
+              </li>
+            ))}
+            {results.attireProfiles.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-prep/attire');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{p.personRole}</p>
+                    <Badge tone="neutral">{p.outfitType}</Badge>
+                  </div>
+                </button>
+              </li>
+            ))}
+            {results.photoGroups.map((g) => (
+              <li key={g.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-prep/photo-video');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{g.groupName}</p>
+                    <Badge tone="neutral">Photo group</Badge>
+                  </div>
+                </button>
+              </li>
+            ))}
+            {results.musicCues.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-prep/music-av');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{c.title}</p>
+                    <Badge tone="neutral">{c.cueType}</Badge>
+                  </div>
+                </button>
+              </li>
+            ))}
+            {results.giftPlans.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-prep/gifts-kits');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{p.recipientName || p.recipientType}</p>
+                    <Badge tone="neutral">{p.giftType}</Badge>
+                  </div>
+                </button>
+              </li>
+            ))}
+            {results.welcomeKits.map((k) => (
+              <li key={k.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/wedding-prep/gifts-kits');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{k.name}</p>
+                    <Badge tone="neutral">Welcome kit</Badge>
+                  </div>
                 </button>
               </li>
             ))}

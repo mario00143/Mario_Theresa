@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Ban, CheckCircle2, Clock, Copy, PlayCircle, Trash2 } from 'lucide-react';
 import { Drawer } from '@/components/ui/Drawer';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +16,15 @@ import { useVendors } from '@/hooks/useVendors';
 import { useBudgetItems } from '@/hooks/useBudget';
 import { usePaymentSchedules } from '@/hooks/usePaymentSchedules';
 import { useContracts } from '@/hooks/useContracts';
+import { useChurchRequirements } from '@/hooks/useChurchRequirements';
+import { useCeremonyParticipants } from '@/hooks/useCeremonyParticipants';
+import { useCeremonyItems } from '@/hooks/useCeremonyItems';
+import { useCateringPlans } from '@/hooks/useCateringPlans';
+import { useDecorPlans } from '@/hooks/useDecorPlans';
+import { useAttireProfiles } from '@/hooks/useAttireProfiles';
+import { usePhotographyPlans } from '@/hooks/usePhotographyPlans';
+import { useMusicAVPlans } from '@/hooks/useMusicAVPlans';
+import { useGiftPlans } from '@/hooks/useGiftPlans';
 import { formatDisplayDate } from '@/utils/date';
 import { getDependencyStatus, isProtectedPeriodViolation, validateTask } from '@/utils/taskLogic';
 import { PROTECTED_PERIOD_MESSAGE } from '@/lib/constants';
@@ -31,6 +41,16 @@ export function TaskDetailDrawer() {
   const { budgetItems } = useBudgetItems();
   const { paymentSchedules } = usePaymentSchedules();
   const { contracts } = useContracts();
+  const { churchRequirements } = useChurchRequirements();
+  const { ceremonyParticipants } = useCeremonyParticipants();
+  const { ceremonyItems } = useCeremonyItems();
+  const { cateringPlans } = useCateringPlans();
+  const { decorPlans } = useDecorPlans();
+  const { attireProfiles } = useAttireProfiles();
+  const { photographyPlans } = usePhotographyPlans();
+  const { musicAVPlans } = useMusicAVPlans();
+  const { giftPlans } = useGiftPlans();
+  const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [tagsInput, setTagsInput] = useState('');
 
@@ -446,6 +466,217 @@ export function TaskDetailDrawer() {
                     <Badge tone="neutral">
                       Contract: {contracts.find((c) => c.id === task.relatedContractId)?.contractReference ?? 'Unknown'}
                     </Badge>
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-3 border-t border-line-soft pt-5">
+            <div>
+              <p className="text-sm font-semibold text-ink">Linked wedding preparation records</p>
+              <p className="text-xs text-ink-faint mt-0.5">Optional — connect this task to a church, ceremony, catering, décor, attire, photography, music, or gift record.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <Label htmlFor="td-related-church-requirement">Church requirement</Label>
+                <Select
+                  id="td-related-church-requirement"
+                  value={task.relatedChurchRequirementId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedChurchRequirementId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {churchRequirements.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.title}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field>
+                <Label htmlFor="td-related-ceremony-participant">Ceremony participant</Label>
+                <Select
+                  id="td-related-ceremony-participant"
+                  value={task.relatedCeremonyParticipantId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedCeremonyParticipantId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {ceremonyParticipants.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.role} — {p.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <Label htmlFor="td-related-ceremony-item">Ceremony item</Label>
+                <Select
+                  id="td-related-ceremony-item"
+                  value={task.relatedCeremonyItemId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedCeremonyItemId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {ceremonyItems.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field>
+                <Label htmlFor="td-related-catering-plan">Catering plan</Label>
+                <Select
+                  id="td-related-catering-plan"
+                  value={task.relatedCateringPlanId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedCateringPlanId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {cateringPlans.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.event} catering
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <Label htmlFor="td-related-decor-plan">Décor plan</Label>
+                <Select
+                  id="td-related-decor-plan"
+                  value={task.relatedDecorPlanId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedDecorPlanId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {decorPlans.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.area}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field>
+                <Label htmlFor="td-related-attire-profile">Attire profile</Label>
+                <Select
+                  id="td-related-attire-profile"
+                  value={task.relatedAttireProfileId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedAttireProfileId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {attireProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.personRole} — {p.outfitType}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <Label htmlFor="td-related-photography-plan">Photography plan</Label>
+                <Select
+                  id="td-related-photography-plan"
+                  value={task.relatedPhotographyPlanId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedPhotographyPlanId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {photographyPlans.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.event} photography
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field>
+                <Label htmlFor="td-related-music-av-plan">Music/AV plan</Label>
+                <Select
+                  id="td-related-music-av-plan"
+                  value={task.relatedMusicAVPlanId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedMusicAVPlanId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {musicAVPlans.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.event} music/AV
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <Field>
+              <Label htmlFor="td-related-gift-plan">Gift plan</Label>
+              <Select
+                id="td-related-gift-plan"
+                value={task.relatedGiftPlanId ?? ''}
+                onChange={(e) => updateTask(task.id, { relatedGiftPlanId: e.target.value || undefined })}
+              >
+                <option value="">None</option>
+                {giftPlans.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.recipientType} — {p.giftType}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            {(task.relatedChurchRequirementId ||
+              task.relatedCeremonyParticipantId ||
+              task.relatedCeremonyItemId ||
+              task.relatedCateringPlanId ||
+              task.relatedDecorPlanId ||
+              task.relatedAttireProfileId ||
+              task.relatedPhotographyPlanId ||
+              task.relatedMusicAVPlanId ||
+              task.relatedGiftPlanId) && (
+              <div className="flex flex-wrap gap-1.5">
+                {task.relatedChurchRequirementId && (
+                  <button type="button" onClick={() => { closeTaskDetail(); navigate('/wedding-prep/church'); }}>
+                    <Badge tone="info">
+                      Church: {churchRequirements.find((r) => r.id === task.relatedChurchRequirementId)?.title ?? 'Unknown'}
+                    </Badge>
+                  </button>
+                )}
+                {task.relatedCeremonyParticipantId && (
+                  <button type="button" onClick={() => { closeTaskDetail(); navigate('/wedding-prep/ceremony'); }}>
+                    <Badge tone="info">
+                      Participant: {ceremonyParticipants.find((p) => p.id === task.relatedCeremonyParticipantId)?.name ?? 'Unknown'}
+                    </Badge>
+                  </button>
+                )}
+                {task.relatedCeremonyItemId && (
+                  <button type="button" onClick={() => { closeTaskDetail(); navigate('/wedding-prep/ceremony-items'); }}>
+                    <Badge tone="info">Item: {ceremonyItems.find((i) => i.id === task.relatedCeremonyItemId)?.name ?? 'Unknown'}</Badge>
+                  </button>
+                )}
+                {task.relatedCateringPlanId && (
+                  <button type="button" onClick={() => { closeTaskDetail(); navigate('/wedding-prep/catering'); }}>
+                    <Badge tone="info">Catering: {cateringPlans.find((p) => p.id === task.relatedCateringPlanId)?.event ?? 'Unknown'}</Badge>
+                  </button>
+                )}
+                {task.relatedDecorPlanId && (
+                  <button type="button" onClick={() => { closeTaskDetail(); navigate('/wedding-prep/decor'); }}>
+                    <Badge tone="info">Décor: {decorPlans.find((p) => p.id === task.relatedDecorPlanId)?.area ?? 'Unknown'}</Badge>
+                  </button>
+                )}
+                {task.relatedAttireProfileId && (
+                  <button type="button" onClick={() => { closeTaskDetail(); navigate('/wedding-prep/attire'); }}>
+                    <Badge tone="info">Attire: {attireProfiles.find((p) => p.id === task.relatedAttireProfileId)?.personRole ?? 'Unknown'}</Badge>
+                  </button>
+                )}
+                {task.relatedPhotographyPlanId && (
+                  <button type="button" onClick={() => { closeTaskDetail(); navigate('/wedding-prep/photo-video'); }}>
+                    <Badge tone="info">Photo: {photographyPlans.find((p) => p.id === task.relatedPhotographyPlanId)?.event ?? 'Unknown'}</Badge>
+                  </button>
+                )}
+                {task.relatedMusicAVPlanId && (
+                  <button type="button" onClick={() => { closeTaskDetail(); navigate('/wedding-prep/music-av'); }}>
+                    <Badge tone="info">Music: {musicAVPlans.find((p) => p.id === task.relatedMusicAVPlanId)?.event ?? 'Unknown'}</Badge>
+                  </button>
+                )}
+                {task.relatedGiftPlanId && (
+                  <button type="button" onClick={() => { closeTaskDetail(); navigate('/wedding-prep/gifts-kits'); }}>
+                    <Badge tone="info">Gift: {giftPlans.find((p) => p.id === task.relatedGiftPlanId)?.recipientType ?? 'Unknown'}</Badge>
                   </button>
                 )}
               </div>

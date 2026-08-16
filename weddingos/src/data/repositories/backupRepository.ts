@@ -1,17 +1,34 @@
 import type {
   AppSettings,
+  AttireItem,
+  AttireProfile,
   BudgetCategory,
   BudgetItem,
+  CateringPlan,
+  CeremonyItem,
+  CeremonyParticipant,
+  CeremonySequenceItem,
+  ChurchProfile,
+  ChurchRequirement,
   Contract,
   Decision,
+  DecorDeliverable,
+  DecorPlan,
   Driver,
+  GiftPlan,
+  GroomingAppointment,
   Guest,
   GuestEvent,
   Hotel,
   Household,
+  MenuItem,
+  MusicAVPlan,
+  MusicCue,
   Owner,
   Payment,
   PaymentSchedule,
+  PhotoGroup,
+  PhotographyPlan,
   Refund,
   Room,
   RoomAssignment,
@@ -25,20 +42,47 @@ import type {
   VendorContact,
   VendorQuote,
   WeddingOSBackup,
+  WelcomeKit,
+  WelcomeKitItem,
 } from '@/types';
 import {
   AGE_CATEGORIES,
   APPROVAL_STATUSES,
+  ATTIRE_ITEM_CATEGORIES,
+  ATTIRE_ITEM_STATUSES,
+  ATTIRE_OUTFIT_TYPES,
+  ATTIRE_STATUSES,
   BACKUP_VERSION,
+  CATERING_SERVICE_STYLES,
+  CEREMONY_ITEM_APPLICABILITY,
+  CEREMONY_ITEM_CATEGORIES,
+  CEREMONY_ITEM_STATUSES,
+  CEREMONY_ITEM_VERIFICATION_STATUSES,
+  CEREMONY_PARTICIPANT_ROLES,
+  CEREMONY_SEQUENCE_STATUSES,
+  CHURCH_APPLICABILITY,
+  CHURCH_REQUIREMENT_CATEGORIES,
+  CHURCH_REQUIREMENT_STATUSES,
   CONTRACT_STATUSES,
+  DECOR_AREAS,
+  DECOR_APPROVAL_STATUSES,
+  DECOR_DELIVERABLE_STATUSES,
   DENOMINATIONS,
   DECISION_STATUSES,
   DIETARY_PREFERENCES,
   EVENTS,
+  GIFT_RECIPIENT_TYPES,
+  GIFT_STATUSES,
+  GROOMING_STATUSES,
+  GROOMING_TYPES,
   HOUSEHOLD_SIDES,
   INVITATION_STATUSES,
+  MENU_COURSES,
+  MENU_DIETARY_TYPES,
+  MUSIC_CUE_TYPES,
   PAYMENT_METHODS,
   PAYMENT_SCHEDULE_STATUSES,
+  PHOTO_GROUP_PRIORITIES,
   PREFERRED_CONTACT_METHODS,
   PRIORITIES,
   QUOTE_STATUSES,
@@ -56,19 +100,39 @@ import {
   VEHICLE_STATUSES,
   VEHICLE_TYPES,
   VENDOR_STATUSES,
+  WELCOME_KIT_STATUSES,
+  DEFAULT_WEDDING_PREP_SECTION_WEIGHTS,
 } from '@/types';
+import { DEFAULT_BUDGET_VARIANCE_WARNING_PERCENT, DEFAULT_CRITICAL_VENDOR_CATEGORIES, DEFAULT_CURRENCY, DEFAULT_LARGE_CASH_WARNING_THRESHOLD } from '@/lib/constants';
 import {
+  attireItemsStore,
+  attireProfilesStore,
   budgetCategoriesStore,
   budgetItemsStore,
+  cateringPlansStore,
+  ceremonyItemsStore,
+  ceremonyParticipantsStore,
+  ceremonySequenceItemsStore,
+  churchProfilesStore,
+  churchRequirementsStore,
   contractsStore,
   decisionsStore,
+  decorDeliverablesStore,
+  decorPlansStore,
   driversStore,
+  giftPlansStore,
+  groomingAppointmentsStore,
   guestsStore,
   hotelsStore,
   householdsStore,
+  menuItemsStore,
+  musicAVPlansStore,
+  musicCuesStore,
   ownersStore,
   paymentSchedulesStore,
   paymentsStore,
+  photoGroupsStore,
+  photographyPlansStore,
   refundsStore,
   roomAssignmentsStore,
   roomTypesStore,
@@ -82,6 +146,8 @@ import {
   vendorContactsStore,
   vendorQuotesStore,
   vendorsStore,
+  welcomeKitItemsStore,
+  welcomeKitsStore,
 } from '../stores';
 
 export function exportBackup(): WeddingOSBackup {
@@ -112,6 +178,25 @@ export function exportBackup(): WeddingOSBackup {
     paymentSchedules: paymentSchedulesStore.get(),
     payments: paymentsStore.get(),
     refunds: refundsStore.get(),
+    churchProfiles: churchProfilesStore.get(),
+    churchRequirements: churchRequirementsStore.get(),
+    ceremonyParticipants: ceremonyParticipantsStore.get(),
+    ceremonySequenceItems: ceremonySequenceItemsStore.get(),
+    ceremonyItems: ceremonyItemsStore.get(),
+    cateringPlans: cateringPlansStore.get(),
+    menuItems: menuItemsStore.get(),
+    decorPlans: decorPlansStore.get(),
+    decorDeliverables: decorDeliverablesStore.get(),
+    attireProfiles: attireProfilesStore.get(),
+    attireItems: attireItemsStore.get(),
+    groomingAppointments: groomingAppointmentsStore.get(),
+    photographyPlans: photographyPlansStore.get(),
+    photoGroups: photoGroupsStore.get(),
+    musicCues: musicCuesStore.get(),
+    musicAVPlans: musicAVPlansStore.get(),
+    giftPlans: giftPlansStore.get(),
+    welcomeKits: welcomeKitsStore.get(),
+    welcomeKitItems: welcomeKitItemsStore.get(),
   };
 }
 
@@ -318,13 +403,169 @@ function isValidRefund(value: unknown): value is Refund {
   return true;
 }
 
+function isValidChurchProfile(value: unknown): value is ChurchProfile {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.churchName !== 'string') return false;
+  if (!DENOMINATIONS.includes(value.denomination as (typeof DENOMINATIONS)[number])) return false;
+  return true;
+}
+
+function isValidChurchRequirement(value: unknown): value is ChurchRequirement {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.churchProfileId !== 'string' || typeof value.title !== 'string') return false;
+  if (!CHURCH_REQUIREMENT_CATEGORIES.includes(value.category as (typeof CHURCH_REQUIREMENT_CATEGORIES)[number])) return false;
+  if (!CHURCH_APPLICABILITY.includes(value.applicability as (typeof CHURCH_APPLICABILITY)[number])) return false;
+  if (!CHURCH_REQUIREMENT_STATUSES.includes(value.status as (typeof CHURCH_REQUIREMENT_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidCeremonyParticipant(value: unknown): value is CeremonyParticipant {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.name !== 'string') return false;
+  if (!CEREMONY_PARTICIPANT_ROLES.includes(value.role as (typeof CEREMONY_PARTICIPANT_ROLES)[number])) return false;
+  if (typeof value.confirmed !== 'boolean') return false;
+  return true;
+}
+
+function isValidCeremonySequenceItem(value: unknown): value is CeremonySequenceItem {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.title !== 'string' || typeof value.sequenceOrder !== 'number') return false;
+  if (!CEREMONY_SEQUENCE_STATUSES.includes(value.status as (typeof CEREMONY_SEQUENCE_STATUSES)[number])) return false;
+  if (!Array.isArray(value.participants) || !Array.isArray(value.requiredItems)) return false;
+  return true;
+}
+
+function isValidCeremonyItem(value: unknown): value is CeremonyItem {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.name !== 'string') return false;
+  if (!CEREMONY_ITEM_CATEGORIES.includes(value.category as (typeof CEREMONY_ITEM_CATEGORIES)[number])) return false;
+  if (!CEREMONY_ITEM_APPLICABILITY.includes(value.applicability as (typeof CEREMONY_ITEM_APPLICABILITY)[number])) return false;
+  if (!CEREMONY_ITEM_STATUSES.includes(value.status as (typeof CEREMONY_ITEM_STATUSES)[number])) return false;
+  if (!CEREMONY_ITEM_VERIFICATION_STATUSES.includes(value.verificationStatus as (typeof CEREMONY_ITEM_VERIFICATION_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidCateringPlan(value: unknown): value is CateringPlan {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string') return false;
+  if (!EVENTS.includes(value.event as (typeof EVENTS)[number])) return false;
+  if (!CATERING_SERVICE_STYLES.includes(value.serviceStyle as (typeof CATERING_SERVICE_STYLES)[number])) return false;
+  if (typeof value.coupleMealReserved !== 'boolean') return false;
+  return true;
+}
+
+function isValidMenuItem(value: unknown): value is MenuItem {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.cateringPlanId !== 'string' || typeof value.name !== 'string') return false;
+  if (!MENU_COURSES.includes(value.course as (typeof MENU_COURSES)[number])) return false;
+  if (!MENU_DIETARY_TYPES.includes(value.dietaryType as (typeof MENU_DIETARY_TYPES)[number])) return false;
+  return true;
+}
+
+function isValidDecorPlan(value: unknown): value is DecorPlan {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string') return false;
+  if (!DECOR_AREAS.includes(value.area as (typeof DECOR_AREAS)[number])) return false;
+  if (!DECOR_APPROVAL_STATUSES.includes(value.approvalStatus as (typeof DECOR_APPROVAL_STATUSES)[number])) return false;
+  if (typeof value.finalWalkthroughComplete !== 'boolean') return false;
+  return true;
+}
+
+function isValidDecorDeliverable(value: unknown): value is DecorDeliverable {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.decorPlanId !== 'string' || typeof value.name !== 'string') return false;
+  if (!DECOR_DELIVERABLE_STATUSES.includes(value.status as (typeof DECOR_DELIVERABLE_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidAttireProfile(value: unknown): value is AttireProfile {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.personRole !== 'string') return false;
+  if (!ATTIRE_OUTFIT_TYPES.includes(value.outfitType as (typeof ATTIRE_OUTFIT_TYPES)[number])) return false;
+  if (!ATTIRE_STATUSES.includes(value.status as (typeof ATTIRE_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidAttireItem(value: unknown): value is AttireItem {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.attireProfileId !== 'string' || typeof value.itemName !== 'string') return false;
+  if (!ATTIRE_ITEM_CATEGORIES.includes(value.category as (typeof ATTIRE_ITEM_CATEGORIES)[number])) return false;
+  if (!ATTIRE_ITEM_STATUSES.includes(value.status as (typeof ATTIRE_ITEM_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidGroomingAppointment(value: unknown): value is GroomingAppointment {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.personRole !== 'string') return false;
+  if (!GROOMING_TYPES.includes(value.type as (typeof GROOMING_TYPES)[number])) return false;
+  if (!GROOMING_STATUSES.includes(value.status as (typeof GROOMING_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidPhotographyPlan(value: unknown): value is PhotographyPlan {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string') return false;
+  if (!EVENTS.includes(value.event as (typeof EVENTS)[number])) return false;
+  if (typeof value.churchRestrictionsConfirmed !== 'boolean') return false;
+  return true;
+}
+
+function isValidPhotoGroup(value: unknown): value is PhotoGroup {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.groupName !== 'string') return false;
+  if (!PHOTO_GROUP_PRIORITIES.includes(value.priority as (typeof PHOTO_GROUP_PRIORITIES)[number])) return false;
+  if (!Array.isArray(value.participants)) return false;
+  return true;
+}
+
+function isValidMusicCue(value: unknown): value is MusicCue {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.title !== 'string') return false;
+  if (!MUSIC_CUE_TYPES.includes(value.cueType as (typeof MUSIC_CUE_TYPES)[number])) return false;
+  if (typeof value.approved !== 'boolean') return false;
+  return true;
+}
+
+function isValidMusicAVPlan(value: unknown): value is MusicAVPlan {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string') return false;
+  if (!EVENTS.includes(value.event as (typeof EVENTS)[number])) return false;
+  if (typeof value.podiumRequired !== 'boolean' || typeof value.offlinePlaylistReady !== 'boolean') return false;
+  return true;
+}
+
+function isValidGiftPlan(value: unknown): value is GiftPlan {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.giftType !== 'string' || typeof value.quantity !== 'number') return false;
+  if (!GIFT_RECIPIENT_TYPES.includes(value.recipientType as (typeof GIFT_RECIPIENT_TYPES)[number])) return false;
+  if (!GIFT_STATUSES.includes(value.status as (typeof GIFT_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidWelcomeKit(value: unknown): value is WelcomeKit {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.name !== 'string') return false;
+  if (typeof value.quantityPlanned !== 'number' || typeof value.quantityPrepared !== 'number') return false;
+  if (!WELCOME_KIT_STATUSES.includes(value.status as (typeof WELCOME_KIT_STATUSES)[number])) return false;
+  return true;
+}
+
+function isValidWelcomeKitItem(value: unknown): value is WelcomeKitItem {
+  if (!isPlainObject(value)) return false;
+  if (typeof value.id !== 'string' || typeof value.welcomeKitId !== 'string' || typeof value.itemName !== 'string') return false;
+  if (typeof value.quantityPerKit !== 'number') return false;
+  return true;
+}
+
 /**
  * Accepts version 1 (Phase 1: settings/tasks/decisions/owners only),
  * version 2 (Phase 2: adds households/guests), version 3 (Phase 3: adds
- * travel/accommodation/transport logistics), and version 4 (Phase 4: adds
- * vendors/quotes/contracts/budget/payments/refunds) backups. Collections
- * introduced after a file's version are optional in that file and are
- * initialized to empty arrays on import (see normalizeBackup).
+ * travel/accommodation/transport logistics), version 4 (Phase 4: adds
+ * vendors/quotes/contracts/budget/payments/refunds), and version 5
+ * (Phase 5: adds church/ceremony/catering/décor/attire/photography/music/
+ * gifts wedding-preparation records). Collections introduced after a
+ * file's version are optional in that file and are initialized to empty
+ * arrays on import (see normalizeBackup).
  */
 export function validateBackup(data: unknown): BackupValidationResult {
   const errors: string[] = [];
@@ -401,7 +642,52 @@ export function validateBackup(data: unknown): BackupValidationResult {
     }
   }
 
+  const isV5OrLater = version !== null && version >= 5;
+  const weddingPrepFields: Array<[key: string, validator: (v: unknown) => boolean, label: string]> = [
+    ['churchProfiles', (v) => Array.isArray(v) && v.every(isValidChurchProfile), 'Church profiles'],
+    ['churchRequirements', (v) => Array.isArray(v) && v.every(isValidChurchRequirement), 'Church requirements'],
+    ['ceremonyParticipants', (v) => Array.isArray(v) && v.every(isValidCeremonyParticipant), 'Ceremony participants'],
+    ['ceremonySequenceItems', (v) => Array.isArray(v) && v.every(isValidCeremonySequenceItem), 'Ceremony sequence items'],
+    ['ceremonyItems', (v) => Array.isArray(v) && v.every(isValidCeremonyItem), 'Ceremony items'],
+    ['cateringPlans', (v) => Array.isArray(v) && v.every(isValidCateringPlan), 'Catering plans'],
+    ['menuItems', (v) => Array.isArray(v) && v.every(isValidMenuItem), 'Menu items'],
+    ['decorPlans', (v) => Array.isArray(v) && v.every(isValidDecorPlan), 'Décor plans'],
+    ['decorDeliverables', (v) => Array.isArray(v) && v.every(isValidDecorDeliverable), 'Décor deliverables'],
+    ['attireProfiles', (v) => Array.isArray(v) && v.every(isValidAttireProfile), 'Attire profiles'],
+    ['attireItems', (v) => Array.isArray(v) && v.every(isValidAttireItem), 'Attire items'],
+    ['groomingAppointments', (v) => Array.isArray(v) && v.every(isValidGroomingAppointment), 'Grooming appointments'],
+    ['photographyPlans', (v) => Array.isArray(v) && v.every(isValidPhotographyPlan), 'Photography plans'],
+    ['photoGroups', (v) => Array.isArray(v) && v.every(isValidPhotoGroup), 'Photo groups'],
+    ['musicCues', (v) => Array.isArray(v) && v.every(isValidMusicCue), 'Music cues'],
+    ['musicAVPlans', (v) => Array.isArray(v) && v.every(isValidMusicAVPlan), 'Music/AV plans'],
+    ['giftPlans', (v) => Array.isArray(v) && v.every(isValidGiftPlan), 'Gift plans'],
+    ['welcomeKits', (v) => Array.isArray(v) && v.every(isValidWelcomeKit), 'Welcome kits'],
+    ['welcomeKitItems', (v) => Array.isArray(v) && v.every(isValidWelcomeKitItem), 'Welcome kit items'],
+  ];
+  for (const [key, validator, label] of weddingPrepFields) {
+    if ((isV5OrLater || data[key] !== undefined) && !validator(data[key])) {
+      errors.push(`${label} section is missing or contains malformed entries.`);
+    }
+  }
+
   return { valid: errors.length === 0, errors };
+}
+
+/** Backfills settings sub-objects introduced in later versions (finance in v4, weddingPrep in v5) for older backups. */
+function normalizeSettings(rawSettings: unknown): AppSettings {
+  const settings = rawSettings as AppSettings;
+  return {
+    ...settings,
+    finance: settings.finance ?? {
+      currency: DEFAULT_CURRENCY,
+      largeCashWarningThreshold: DEFAULT_LARGE_CASH_WARNING_THRESHOLD,
+      budgetVarianceWarningPercent: DEFAULT_BUDGET_VARIANCE_WARNING_PERCENT,
+      criticalVendorCategories: [...DEFAULT_CRITICAL_VENDOR_CATEGORIES],
+    },
+    weddingPrep: settings.weddingPrep ?? {
+      sectionWeights: { ...DEFAULT_WEDDING_PREP_SECTION_WEIGHTS },
+    },
+  };
 }
 
 /**
@@ -414,7 +700,7 @@ export function normalizeBackup(data: unknown): WeddingOSBackup {
   return {
     version: typeof raw.version === 'number' ? raw.version : BACKUP_VERSION,
     exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : new Date().toISOString(),
-    settings: raw.settings as AppSettings,
+    settings: normalizeSettings(raw.settings),
     tasks: raw.tasks as Task[],
     decisions: raw.decisions as Decision[],
     owners: raw.owners as Owner[],
@@ -438,6 +724,25 @@ export function normalizeBackup(data: unknown): WeddingOSBackup {
     paymentSchedules: Array.isArray(raw.paymentSchedules) ? (raw.paymentSchedules as PaymentSchedule[]) : [],
     payments: Array.isArray(raw.payments) ? (raw.payments as Payment[]) : [],
     refunds: Array.isArray(raw.refunds) ? (raw.refunds as Refund[]) : [],
+    churchProfiles: Array.isArray(raw.churchProfiles) ? (raw.churchProfiles as ChurchProfile[]) : [],
+    churchRequirements: Array.isArray(raw.churchRequirements) ? (raw.churchRequirements as ChurchRequirement[]) : [],
+    ceremonyParticipants: Array.isArray(raw.ceremonyParticipants) ? (raw.ceremonyParticipants as CeremonyParticipant[]) : [],
+    ceremonySequenceItems: Array.isArray(raw.ceremonySequenceItems) ? (raw.ceremonySequenceItems as CeremonySequenceItem[]) : [],
+    ceremonyItems: Array.isArray(raw.ceremonyItems) ? (raw.ceremonyItems as CeremonyItem[]) : [],
+    cateringPlans: Array.isArray(raw.cateringPlans) ? (raw.cateringPlans as CateringPlan[]) : [],
+    menuItems: Array.isArray(raw.menuItems) ? (raw.menuItems as MenuItem[]) : [],
+    decorPlans: Array.isArray(raw.decorPlans) ? (raw.decorPlans as DecorPlan[]) : [],
+    decorDeliverables: Array.isArray(raw.decorDeliverables) ? (raw.decorDeliverables as DecorDeliverable[]) : [],
+    attireProfiles: Array.isArray(raw.attireProfiles) ? (raw.attireProfiles as AttireProfile[]) : [],
+    attireItems: Array.isArray(raw.attireItems) ? (raw.attireItems as AttireItem[]) : [],
+    groomingAppointments: Array.isArray(raw.groomingAppointments) ? (raw.groomingAppointments as GroomingAppointment[]) : [],
+    photographyPlans: Array.isArray(raw.photographyPlans) ? (raw.photographyPlans as PhotographyPlan[]) : [],
+    photoGroups: Array.isArray(raw.photoGroups) ? (raw.photoGroups as PhotoGroup[]) : [],
+    musicCues: Array.isArray(raw.musicCues) ? (raw.musicCues as MusicCue[]) : [],
+    musicAVPlans: Array.isArray(raw.musicAVPlans) ? (raw.musicAVPlans as MusicAVPlan[]) : [],
+    giftPlans: Array.isArray(raw.giftPlans) ? (raw.giftPlans as GiftPlan[]) : [],
+    welcomeKits: Array.isArray(raw.welcomeKits) ? (raw.welcomeKits as WelcomeKit[]) : [],
+    welcomeKitItems: Array.isArray(raw.welcomeKitItems) ? (raw.welcomeKitItems as WelcomeKitItem[]) : [],
   };
 }
 
@@ -467,6 +772,25 @@ export function importBackup(backup: WeddingOSBackup): void {
   paymentSchedulesStore.set(backup.paymentSchedules ?? []);
   paymentsStore.set(backup.payments ?? []);
   refundsStore.set(backup.refunds ?? []);
+  churchProfilesStore.set(backup.churchProfiles ?? []);
+  churchRequirementsStore.set(backup.churchRequirements ?? []);
+  ceremonyParticipantsStore.set(backup.ceremonyParticipants ?? []);
+  ceremonySequenceItemsStore.set(backup.ceremonySequenceItems ?? []);
+  ceremonyItemsStore.set(backup.ceremonyItems ?? []);
+  cateringPlansStore.set(backup.cateringPlans ?? []);
+  menuItemsStore.set(backup.menuItems ?? []);
+  decorPlansStore.set(backup.decorPlans ?? []);
+  decorDeliverablesStore.set(backup.decorDeliverables ?? []);
+  attireProfilesStore.set(backup.attireProfiles ?? []);
+  attireItemsStore.set(backup.attireItems ?? []);
+  groomingAppointmentsStore.set(backup.groomingAppointments ?? []);
+  photographyPlansStore.set(backup.photographyPlans ?? []);
+  photoGroupsStore.set(backup.photoGroups ?? []);
+  musicCuesStore.set(backup.musicCues ?? []);
+  musicAVPlansStore.set(backup.musicAVPlans ?? []);
+  giftPlansStore.set(backup.giftPlans ?? []);
+  welcomeKitsStore.set(backup.welcomeKits ?? []);
+  welcomeKitItemsStore.set(backup.welcomeKitItems ?? []);
 }
 
 function csvEscape(value: string | number | undefined | null): string {

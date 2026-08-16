@@ -1,6 +1,6 @@
 import type { BudgetItem } from '@/types';
 import { generateId } from '@/lib/id';
-import { budgetItemsStore, paymentSchedulesStore, paymentsStore } from '../stores';
+import { budgetItemsStore, ceremonyItemsStore, giftPlansStore, paymentSchedulesStore, paymentsStore } from '../stores';
 
 export type NewBudgetItemInput = Omit<BudgetItem, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -24,4 +24,6 @@ export function deleteBudgetItem(id: string): void {
   budgetItemsStore.set((prev) => prev.filter((i) => i.id !== id));
   paymentSchedulesStore.set((prev) => prev.map((s) => (s.budgetItemId === id ? { ...s, budgetItemId: undefined, updatedAt: nowISO() } : s)));
   paymentsStore.set((prev) => prev.map((p) => (p.budgetItemId === id ? { ...p, budgetItemId: undefined, updatedAt: nowISO() } : p)));
+  ceremonyItemsStore.set((prev) => prev.map((i) => (i.relatedBudgetItemId === id ? { ...i, relatedBudgetItemId: undefined, updatedAt: nowISO() } : i)));
+  giftPlansStore.set((prev) => prev.map((p) => (p.budgetItemId === id ? { ...p, budgetItemId: undefined, updatedAt: nowISO() } : p)));
 }

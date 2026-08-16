@@ -21,16 +21,36 @@ import type { BudgetItem } from './budgetItem';
 import type { PaymentSchedule } from './paymentSchedule';
 import type { Payment } from './payment';
 import type { Refund } from './refund';
+import type { ChurchProfile } from './churchProfile';
+import type { ChurchRequirement } from './churchRequirement';
+import type { CeremonyParticipant } from './ceremonyParticipant';
+import type { CeremonySequenceItem } from './ceremonySequenceItem';
+import type { CeremonyItem } from './ceremonyItem';
+import type { CateringPlan } from './cateringPlan';
+import type { MenuItem } from './menuItem';
+import type { DecorPlan } from './decorPlan';
+import type { DecorDeliverable } from './decorDeliverable';
+import type { AttireProfile } from './attireProfile';
+import type { AttireItem } from './attireItem';
+import type { GroomingAppointment } from './groomingAppointment';
+import type { PhotographyPlan } from './photographyPlan';
+import type { PhotoGroup } from './photoGroup';
+import type { MusicCue } from './musicCue';
+import type { MusicAVPlan } from './musicAVPlan';
+import type { GiftPlan } from './giftPlan';
+import type { WelcomeKit } from './welcomeKit';
+import type { WelcomeKitItem } from './welcomeKitItem';
 
 /**
  * Version 1: settings/tasks/decisions/owners only (Phase 1).
  * Version 2: adds households/guests (Phase 2).
  * Version 3: adds travel/accommodation/transport logistics (Phase 3).
  * Version 4: adds vendors/quotes/contracts/budget/payments/refunds (Phase 4).
+ * Version 5: adds church/ceremony/catering/décor/attire/photography/music/gifts wedding-preparation records (Phase 5).
  * Older files still import successfully — see backupRepository.normalizeBackup
  * — with the collections introduced after their version initialized empty.
  */
-export const BACKUP_VERSION = 4;
+export const BACKUP_VERSION = 5;
 
 export interface WeddingOSBackup {
   version: number;
@@ -59,4 +79,23 @@ export interface WeddingOSBackup {
   paymentSchedules: PaymentSchedule[];
   payments: Payment[];
   refunds: Refund[];
+  churchProfiles: ChurchProfile[];
+  churchRequirements: ChurchRequirement[];
+  ceremonyParticipants: CeremonyParticipant[];
+  ceremonySequenceItems: CeremonySequenceItem[];
+  ceremonyItems: CeremonyItem[];
+  cateringPlans: CateringPlan[];
+  menuItems: MenuItem[];
+  decorPlans: DecorPlan[];
+  decorDeliverables: DecorDeliverable[];
+  attireProfiles: AttireProfile[];
+  attireItems: AttireItem[];
+  groomingAppointments: GroomingAppointment[];
+  photographyPlans: PhotographyPlan[];
+  photoGroups: PhotoGroup[];
+  musicCues: MusicCue[];
+  musicAVPlans: MusicAVPlan[];
+  giftPlans: GiftPlan[];
+  welcomeKits: WelcomeKit[];
+  welcomeKitItems: WelcomeKitItem[];
 }

@@ -39,4 +39,12 @@ describe('settings updates', () => {
     expect(after.weddingDetails.overallBudget).toBe(5000000);
     expect(after.weddingDetails.currency).toBe(before.weddingDetails.currency);
   });
+
+  it('updates a single wedding prep section weight without dropping the others', () => {
+    const before = settingsStore.get();
+    updateSettings({ weddingPrep: { sectionWeights: { ...before.weddingPrep.sectionWeights, church: 40 } } });
+    const after = settingsStore.get();
+    expect(after.weddingPrep.sectionWeights.church).toBe(40);
+    expect(after.weddingPrep.sectionWeights.ceremony).toBe(before.weddingPrep.sectionWeights.ceremony);
+  });
 });

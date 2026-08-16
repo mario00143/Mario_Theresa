@@ -48,6 +48,32 @@ import {
   vendorsCsvFilename,
   vendorsToCSV,
 } from '@/data/repositories/financeCsv';
+import {
+  attireReadinessCsvFilename,
+  attireReadinessToCSV,
+  cateringSummaryCsvFilename,
+  cateringSummaryToCSV,
+  ceremonyItemsCsvFilename,
+  ceremonyItemsToCSV,
+  ceremonyParticipantsCsvFilename,
+  ceremonyParticipantsToCSV,
+  churchRequirementsCsvFilename,
+  churchRequirementsToCSV,
+  decorPlansCsvFilename,
+  decorPlansToCSV,
+  giftsFavorsCsvFilename,
+  giftsFavorsToCSV,
+  menuCsvFilename,
+  menuToCSV,
+  musicCueSheetCsvFilename,
+  musicCueSheetToCSV,
+  photoGroupListCsvFilename,
+  photoGroupListToCSV,
+  weddingPrepIssuesCsvFilename,
+  weddingPrepIssuesToCSV,
+  weddingPrepReadinessCsvFilename,
+  weddingPrepReadinessToCSV,
+} from '@/data/repositories/weddingPrepCsv';
 import { resetToDemoData } from '@/data/stores';
 import { useTasks } from '@/hooks/useTasks';
 import { useHouseholds } from '@/hooks/useHouseholds';
@@ -68,6 +94,38 @@ import { useBudgetCategories, useBudgetItems } from '@/hooks/useBudget';
 import { usePaymentSchedules } from '@/hooks/usePaymentSchedules';
 import { usePayments } from '@/hooks/usePayments';
 import { useRefunds } from '@/hooks/useRefunds';
+import { useChurchProfiles } from '@/hooks/useChurchProfiles';
+import { useChurchRequirements } from '@/hooks/useChurchRequirements';
+import { useCeremonyParticipants } from '@/hooks/useCeremonyParticipants';
+import { useCeremonySequence } from '@/hooks/useCeremonySequence';
+import { useCeremonyItems } from '@/hooks/useCeremonyItems';
+import { useCateringPlans } from '@/hooks/useCateringPlans';
+import { useMenuItems } from '@/hooks/useMenuItems';
+import { useDecorPlans } from '@/hooks/useDecorPlans';
+import { useDecorDeliverables } from '@/hooks/useDecorDeliverables';
+import { useAttireProfiles } from '@/hooks/useAttireProfiles';
+import { useAttireItems } from '@/hooks/useAttireItems';
+import { useGroomingAppointments } from '@/hooks/useGroomingAppointments';
+import { usePhotographyPlans } from '@/hooks/usePhotographyPlans';
+import { usePhotoGroups } from '@/hooks/usePhotoGroups';
+import { useMusicCues } from '@/hooks/useMusicCues';
+import { useMusicAVPlans } from '@/hooks/useMusicAVPlans';
+import { useGiftPlans } from '@/hooks/useGiftPlans';
+import { useWelcomeKits } from '@/hooks/useWelcomeKits';
+import { useSettings } from '@/hooks/useSettings';
+import { computeSuggestedCateringCounts } from '@/utils/cateringLogic';
+import { detectWeddingPrepIssues } from '@/utils/weddingPrepDataQuality';
+import {
+  computeAttireReadiness,
+  computeCateringReadiness,
+  computeCeremonyReadiness,
+  computeChurchReadiness,
+  computeDecorReadiness,
+  computeGiftsKitsReadiness,
+  computeMusicAVReadiness,
+  computePhotographyReadiness,
+} from '@/utils/weddingPrepReadiness';
+import { weddingDateTimeISO } from '@/utils/date';
 import { downloadTextFile } from '@/utils/download';
 import type { WeddingOSBackup } from '@/types';
 
@@ -93,6 +151,25 @@ export function DataManagement() {
   const { paymentSchedules } = usePaymentSchedules();
   const { payments } = usePayments();
   const { refunds } = useRefunds();
+  const { churchProfiles } = useChurchProfiles();
+  const { churchRequirements } = useChurchRequirements();
+  const { ceremonyParticipants } = useCeremonyParticipants();
+  const { sequenceItems } = useCeremonySequence();
+  const { ceremonyItems } = useCeremonyItems();
+  const { cateringPlans } = useCateringPlans();
+  const { menuItems } = useMenuItems();
+  const { decorPlans } = useDecorPlans();
+  const { decorDeliverables } = useDecorDeliverables();
+  const { attireProfiles } = useAttireProfiles();
+  const { attireItems } = useAttireItems();
+  const { groomingAppointments } = useGroomingAppointments();
+  const { photographyPlans } = usePhotographyPlans();
+  const { photoGroups } = usePhotoGroups();
+  const { musicCues } = useMusicCues();
+  const { musicAVPlans } = useMusicAVPlans();
+  const { giftPlans } = useGiftPlans();
+  const { welcomeKits } = useWelcomeKits();
+  const { settings } = useSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingImport, setPendingImport] = useState<WeddingOSBackup | null>(null);
   const [importErrors, setImportErrors] = useState<string[]>([]);
@@ -199,6 +276,98 @@ export function DataManagement() {
     setStatus('Vendor readiness exported as CSV.');
   };
 
+  const handleExportChurchRequirementsCSV = () => {
+    downloadTextFile(churchRequirementsCsvFilename(), churchRequirementsToCSV(churchRequirements), 'text/csv');
+    setStatus('Church requirements exported as CSV.');
+  };
+
+  const handleExportCeremonyParticipantsCSV = () => {
+    downloadTextFile(ceremonyParticipantsCsvFilename(), ceremonyParticipantsToCSV(ceremonyParticipants), 'text/csv');
+    setStatus('Ceremony participants exported as CSV.');
+  };
+
+  const handleExportCeremonyItemsCSV = () => {
+    downloadTextFile(ceremonyItemsCsvFilename(), ceremonyItemsToCSV(ceremonyItems), 'text/csv');
+    setStatus('Ceremony items exported as CSV.');
+  };
+
+  const handleExportCateringSummaryCSV = () => {
+    downloadTextFile(cateringSummaryCsvFilename(), cateringSummaryToCSV(cateringPlans), 'text/csv');
+    setStatus('Catering summary exported as CSV.');
+  };
+
+  const handleExportMenuCSV = () => {
+    downloadTextFile(menuCsvFilename(), menuToCSV(menuItems), 'text/csv');
+    setStatus('Menu exported as CSV.');
+  };
+
+  const handleExportDecorPlansCSV = () => {
+    downloadTextFile(decorPlansCsvFilename(), decorPlansToCSV(decorPlans, decorDeliverables, vendors), 'text/csv');
+    setStatus('Décor plans exported as CSV.');
+  };
+
+  const handleExportAttireReadinessCSV = () => {
+    downloadTextFile(attireReadinessCsvFilename(), attireReadinessToCSV(attireProfiles, attireItems), 'text/csv');
+    setStatus('Attire readiness exported as CSV.');
+  };
+
+  const handleExportPhotoGroupListCSV = () => {
+    downloadTextFile(photoGroupListCsvFilename(), photoGroupListToCSV(photoGroups), 'text/csv');
+    setStatus('Photo group list exported as CSV.');
+  };
+
+  const handleExportMusicCueSheetCSV = () => {
+    downloadTextFile(musicCueSheetCsvFilename(), musicCueSheetToCSV(musicCues), 'text/csv');
+    setStatus('Music cue sheet exported as CSV.');
+  };
+
+  const handleExportGiftsFavorsCSV = () => {
+    downloadTextFile(giftsFavorsCsvFilename(), giftsFavorsToCSV(giftPlans), 'text/csv');
+    setStatus('Gifts and favors exported as CSV.');
+  };
+
+  const handleExportWeddingPrepIssuesCSV = () => {
+    const weddingDateTime = weddingDateTimeISO(settings);
+    const suggested = computeSuggestedCateringCounts(guests, 'Wedding');
+    const issues = detectWeddingPrepIssues({
+      churchProfile: churchProfiles[0],
+      churchRequirements,
+      ceremonyParticipants,
+      ceremonyItems,
+      cateringPlans,
+      menuItems,
+      decorPlans,
+      attireProfiles,
+      attireItems,
+      photographyPlans,
+      photoGroups,
+      musicCues,
+      musicAVPlans,
+      giftPlans,
+      welcomeKits,
+      weddingDateTimeISO: weddingDateTime,
+      confirmedWeddingAttendance: suggested.confirmedAttendees,
+      favorBuffer: 10,
+    });
+    downloadTextFile(weddingPrepIssuesCsvFilename(), weddingPrepIssuesToCSV(issues), 'text/csv');
+    setStatus('Wedding prep issues exported as CSV.');
+  };
+
+  const handleExportWeddingPrepReadinessCSV = () => {
+    const sections = {
+      Church: computeChurchReadiness(churchProfiles[0], churchRequirements),
+      Ceremony: computeCeremonyReadiness(ceremonyParticipants, sequenceItems, ceremonyItems),
+      Catering: computeCateringReadiness(cateringPlans, menuItems),
+      'Décor': computeDecorReadiness(decorPlans, decorDeliverables),
+      Attire: computeAttireReadiness(attireProfiles, attireItems, groomingAppointments),
+      Photography: computePhotographyReadiness(photographyPlans, photoGroups),
+      'Music / AV': computeMusicAVReadiness(musicAVPlans, musicCues),
+      'Gifts / Kits': computeGiftsKitsReadiness(giftPlans, welcomeKits),
+    };
+    downloadTextFile(weddingPrepReadinessCsvFilename(), weddingPrepReadinessToCSV(sections), 'text/csv');
+    setStatus('Wedding prep readiness exported as CSV.');
+  };
+
   const handleFileSelected = async (file: File) => {
     setImportErrors([]);
     setStatus(null);
@@ -255,8 +424,8 @@ export function DataManagement() {
         <div>
           <p className="text-sm font-medium text-ink">Backup</p>
           <p className="text-xs text-ink-faint mt-0.5 mb-2.5">
-            Export everything — settings, tasks, decisions, owner roles, households, guests, travel/accommodation/transport logistics, and vendors/budget/payments — as a single JSON file.
-            Version 1, 2, and 3 backups from earlier phases can still be imported; collections introduced after a file's version are initialized empty for those files.
+            Export everything — settings, tasks, decisions, owner roles, households, guests, travel/accommodation/transport logistics, vendors/budget/payments, and church/ceremony/wedding-preparation records — as a single JSON file.
+            Version 1 through 4 backups from earlier phases can still be imported; collections introduced after a file's version are initialized empty for those files.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportJSON}>
@@ -342,6 +511,42 @@ export function DataManagement() {
             </Button>
             <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportVendorReadinessCSV}>
               Export vendor readiness (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportChurchRequirementsCSV}>
+              Export church requirements (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportCeremonyParticipantsCSV}>
+              Export ceremony participants (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportCeremonyItemsCSV}>
+              Export ceremony items (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportCateringSummaryCSV}>
+              Export catering summary (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportMenuCSV}>
+              Export menu (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportDecorPlansCSV}>
+              Export décor plans (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportAttireReadinessCSV}>
+              Export attire readiness (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportPhotoGroupListCSV}>
+              Export photo group list (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportMusicCueSheetCSV}>
+              Export music cue sheet (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportGiftsFavorsCSV}>
+              Export gifts &amp; favors (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportWeddingPrepIssuesCSV}>
+              Export wedding prep issues (CSV)
+            </Button>
+            <Button variant="secondary" icon={<Download className="size-4" aria-hidden="true" />} onClick={handleExportWeddingPrepReadinessCSV}>
+              Export wedding prep readiness (CSV)
             </Button>
           </div>
         </div>

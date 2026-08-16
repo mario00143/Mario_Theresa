@@ -1,16 +1,26 @@
 import type { Vendor } from '@/types';
 import { generateId } from '@/lib/id';
 import {
+  attireProfilesStore,
   budgetItemsStore,
+  cateringPlansStore,
+  ceremonyItemsStore,
   contractsStore,
+  decorPlansStore,
+  giftPlansStore,
+  groomingAppointmentsStore,
   hotelsStore,
+  musicAVPlansStore,
+  musicCuesStore,
   paymentSchedulesStore,
   paymentsStore,
+  photographyPlansStore,
   refundsStore,
   vehiclesStore,
   vendorContactsStore,
   vendorQuotesStore,
   vendorsStore,
+  welcomeKitItemsStore,
 } from '../stores';
 
 export type NewVendorInput = Omit<
@@ -58,6 +68,29 @@ export function deleteVendor(id: string): void {
   budgetItemsStore.set((prev) => prev.map((item) => (item.vendorId === id ? { ...item, vendorId: undefined, updatedAt: nowISO() } : item)));
   hotelsStore.set((prev) => prev.map((h) => (h.vendorId === id ? { ...h, vendorId: undefined, updatedAt: nowISO() } : h)));
   vehiclesStore.set((prev) => prev.map((v) => (v.vendorId === id ? { ...v, vendorId: undefined, updatedAt: nowISO() } : v)));
+
+  // Phase 5 wedding-preparation records — same un-link-not-delete treatment.
+  ceremonyItemsStore.set((prev) => prev.map((i) => (i.relatedVendorId === id ? { ...i, relatedVendorId: undefined, updatedAt: nowISO() } : i)));
+  cateringPlansStore.set((prev) => prev.map((p) => (p.vendorId === id ? { ...p, vendorId: undefined, updatedAt: nowISO() } : p)));
+  decorPlansStore.set((prev) => prev.map((p) => (p.vendorId === id ? { ...p, vendorId: undefined, updatedAt: nowISO() } : p)));
+  attireProfilesStore.set((prev) => prev.map((p) => (p.vendorId === id ? { ...p, vendorId: undefined, updatedAt: nowISO() } : p)));
+  groomingAppointmentsStore.set((prev) => prev.map((a) => (a.vendorId === id ? { ...a, vendorId: undefined, updatedAt: nowISO() } : a)));
+  photographyPlansStore.set((prev) => prev.map((p) => (p.vendorId === id ? { ...p, vendorId: undefined, updatedAt: nowISO() } : p)));
+  musicCuesStore.set((prev) => prev.map((c) => (c.linkedVendorId === id ? { ...c, linkedVendorId: undefined, updatedAt: nowISO() } : c)));
+  musicAVPlansStore.set((prev) =>
+    prev.map((p) => {
+      if (p.choirVendorId !== id && p.djVendorId !== id && p.avVendorId !== id) return p;
+      return {
+        ...p,
+        choirVendorId: p.choirVendorId === id ? undefined : p.choirVendorId,
+        djVendorId: p.djVendorId === id ? undefined : p.djVendorId,
+        avVendorId: p.avVendorId === id ? undefined : p.avVendorId,
+        updatedAt: nowISO(),
+      };
+    }),
+  );
+  giftPlansStore.set((prev) => prev.map((p) => (p.vendorId === id ? { ...p, vendorId: undefined, updatedAt: nowISO() } : p)));
+  welcomeKitItemsStore.set((prev) => prev.map((i) => (i.vendorId === id ? { ...i, vendorId: undefined, updatedAt: nowISO() } : i)));
 }
 
 /** Marks a vendor Confirmed and stamps the final-confirmation fields (section 21's "Confirm Vendor" action). */

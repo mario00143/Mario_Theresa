@@ -6,6 +6,7 @@ import { TasksPage } from '@/pages/TasksPage';
 import { GuestsPage } from '@/pages/GuestsPage';
 import { LogisticsPage } from '@/pages/LogisticsPage';
 import { VendorsPage } from '@/pages/VendorsPage';
+import { WeddingPrepPage } from '@/pages/WeddingPrepPage';
 import { CalendarPage } from '@/pages/CalendarPage';
 import { DecisionsPage } from '@/pages/DecisionsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
@@ -21,6 +22,7 @@ export default function App() {
             <Route path="guests/*" element={<GuestsPage />} />
             <Route path="logistics/*" element={<LogisticsPage />} />
             <Route path="vendors/*" element={<VendorsPage />} />
+            <Route path="wedding-prep/*" element={<WeddingPrepPage />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="decisions" element={<DecisionsPage />} />
             <Route path="settings/*" element={<SettingsPage />} />

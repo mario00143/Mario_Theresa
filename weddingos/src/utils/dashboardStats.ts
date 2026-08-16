@@ -33,6 +33,7 @@ import { isTransportAssignmentActive, seatsAssignedForRoute } from './transportL
 import { computeCategorySummary } from './budgetLogic';
 import { computePaymentScheduleStatus } from './paymentLogic';
 import { isCriticalVendorNotReconfirmed } from './vendorReadiness';
+import type { WeddingPrepIssue, WeddingPrepIssueCategory } from './weddingPrepDataQuality';
 import { daysUntil, todayISO } from './date';
 
 export interface PlanningHealth {
@@ -270,6 +271,46 @@ export function buildLogisticsAttentionItems(
         linkId: '/logistics/transport',
       });
     }
+  }
+
+  return items;
+}
+
+const WEDDING_PREP_ATTENTION_ROUTES: Partial<Record<WeddingPrepIssueCategory, string>> = {
+  'church-requirement-overdue': '/wedding-prep/church',
+  'critical-ceremony-item-unverified': '/wedding-prep/ceremony-items',
+  'decor-install-timing-conflict': '/wedding-prep/decor',
+};
+
+/**
+ * Wedding-prep-related Attention Required items: overdue church requirements,
+ * unverified critical ceremony items close to the wedding, and décor install
+ * timing conflicts surface individually; everything else from the full
+ * 24-check list rolls up into a single summary item. Deliberately narrow —
+ * the full list lives in Wedding Prep > Reports > Data Issues, not on the
+ * main dashboard.
+ */
+export function buildWeddingPrepAttentionItems(issues: WeddingPrepIssue[]): AttentionItem[] {
+  const items: AttentionItem[] = [];
+  let rolledUp = 0;
+
+  for (const issue of issues) {
+    const route = WEDDING_PREP_ATTENTION_ROUTES[issue.category];
+    if (route) {
+      items.push({ id: `wedding-prep-${issue.id}`, severity: 'critical', message: issue.message, linkType: 'route', linkId: route });
+    } else {
+      rolledUp += 1;
+    }
+  }
+
+  if (rolledUp > 0) {
+    items.push({
+      id: 'wedding-prep-issues-summary',
+      severity: 'warning',
+      message: `${rolledUp} other wedding prep issue${rolledUp === 1 ? '' : 's'} need${rolledUp === 1 ? 's' : ''} review`,
+      linkType: 'route',
+      linkId: '/wedding-prep/reports',
+    });
   }
 
   return items;

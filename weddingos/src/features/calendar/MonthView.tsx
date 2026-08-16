@@ -1,6 +1,8 @@
+import { useNavigate } from 'react-router-dom';
 import { format, isSameMonth } from 'date-fns';
 import type { Task } from '@/types';
 import { buildMonthGrid } from '@/utils/calendar';
+import type { WeddingPrepKeyDate } from '@/utils/weddingPrepCalendar';
 import { useUI } from '@/context/UIContext';
 import { useSettings } from '@/hooks/useSettings';
 import { cn } from '@/lib/cn';
@@ -11,12 +13,14 @@ const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 interface MonthViewProps {
   monthAnchor: Date;
   tasks: Task[];
+  weddingPrepEvents?: WeddingPrepKeyDate[];
 }
 
-export function MonthView({ monthAnchor, tasks }: MonthViewProps) {
+export function MonthView({ monthAnchor, tasks, weddingPrepEvents = [] }: MonthViewProps) {
   const { openTaskDetail } = useUI();
   const { settings } = useSettings();
-  const weeks = buildMonthGrid(monthAnchor, tasks);
+  const navigate = useNavigate();
+  const weeks = buildMonthGrid(monthAnchor, tasks, weddingPrepEvents);
 
   const engagementDate = settings.engagement.date;
   const weddingDate = settings.wedding.date;
@@ -85,6 +89,21 @@ export function MonthView({ monthAnchor, tasks }: MonthViewProps) {
                     ))}
                     {day.tasks.length > 3 && (
                       <p className="px-1 text-[10px] text-ink-faint">+{day.tasks.length - 3} more</p>
+                    )}
+                    {day.weddingPrepEvents.slice(0, 2).map((event) => (
+                      <button
+                        key={event.id}
+                        type="button"
+                        onClick={() => navigate(event.route)}
+                        className="flex w-full items-center gap-1 truncate rounded px-1 py-0.5 text-left text-[11px] hover:bg-surface-subtle"
+                        title={event.label}
+                      >
+                        <span className="size-1.5 shrink-0 rounded-full bg-brand-500" aria-hidden="true" />
+                        <span className="truncate text-brand-800">{event.label}</span>
+                      </button>
+                    ))}
+                    {day.weddingPrepEvents.length > 2 && (
+                      <p className="px-1 text-[10px] text-ink-faint">+{day.weddingPrepEvents.length - 2} wedding prep</p>
                     )}
                   </div>
                 </div>

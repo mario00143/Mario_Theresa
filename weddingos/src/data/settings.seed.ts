@@ -1,4 +1,5 @@
 import type { AppSettings } from '@/types';
+import { DEFAULT_WEDDING_PREP_SECTION_WEIGHTS } from '@/types';
 import {
   DEFAULT_BUDGET_VARIANCE_WARNING_PERCENT,
   DEFAULT_CRITICAL_VENDOR_CATEGORIES,
@@ -42,6 +43,9 @@ export function seedSettings(): AppSettings {
       largeCashWarningThreshold: DEFAULT_LARGE_CASH_WARNING_THRESHOLD,
       budgetVarianceWarningPercent: DEFAULT_BUDGET_VARIANCE_WARNING_PERCENT,
       criticalVendorCategories: [...DEFAULT_CRITICAL_VENDOR_CATEGORIES],
+    },
+    weddingPrep: {
+      sectionWeights: { ...DEFAULT_WEDDING_PREP_SECTION_WEIGHTS },
     },
   };
 }

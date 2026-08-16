@@ -14,6 +14,21 @@ import { usePaymentSchedules } from '@/hooks/usePaymentSchedules';
 import { usePayments } from '@/hooks/usePayments';
 import { useRefunds } from '@/hooks/useRefunds';
 import { useSettings } from '@/hooks/useSettings';
+import { useChurchProfiles } from '@/hooks/useChurchProfiles';
+import { useChurchRequirements } from '@/hooks/useChurchRequirements';
+import { useCeremonyParticipants } from '@/hooks/useCeremonyParticipants';
+import { useCeremonyItems } from '@/hooks/useCeremonyItems';
+import { useCateringPlans } from '@/hooks/useCateringPlans';
+import { useMenuItems } from '@/hooks/useMenuItems';
+import { useDecorPlans } from '@/hooks/useDecorPlans';
+import { useAttireProfiles } from '@/hooks/useAttireProfiles';
+import { useAttireItems } from '@/hooks/useAttireItems';
+import { usePhotographyPlans } from '@/hooks/usePhotographyPlans';
+import { usePhotoGroups } from '@/hooks/usePhotoGroups';
+import { useMusicCues } from '@/hooks/useMusicCues';
+import { useMusicAVPlans } from '@/hooks/useMusicAVPlans';
+import { useGiftPlans } from '@/hooks/useGiftPlans';
+import { useWelcomeKits } from '@/hooks/useWelcomeKits';
 import { EventCards } from '@/features/dashboard/EventCards';
 import { PlanningHealthGrid } from '@/features/dashboard/PlanningHealthGrid';
 import { AttentionRequired } from '@/features/dashboard/AttentionRequired';
@@ -22,14 +37,18 @@ import { WorkstreamProgress } from '@/features/dashboard/WorkstreamProgress';
 import { GuestSnapshot } from '@/features/dashboard/GuestSnapshot';
 import { LogisticsSnapshot } from '@/features/dashboard/LogisticsSnapshot';
 import { FinanceSnapshot } from '@/features/dashboard/FinanceSnapshot';
+import { WeddingPrepSnapshot } from '@/features/dashboard/WeddingPrepSnapshot';
 import {
   buildAttentionItems,
   buildFinanceAttentionItems,
   buildGuestAttentionItems,
   buildLogisticsAttentionItems,
+  buildWeddingPrepAttentionItems,
   computePlanningHealth,
   upcomingIncompleteTasks,
 } from '@/utils/dashboardStats';
+import { detectWeddingPrepIssues } from '@/utils/weddingPrepDataQuality';
+import { computeSuggestedCateringCounts } from '@/utils/cateringLogic';
 import { weddingDateTimeISO } from '@/utils/date';
 
 export function DashboardPage() {
@@ -50,8 +69,44 @@ export function DashboardPage() {
   const { payments } = usePayments();
   const { refunds } = useRefunds();
   const { settings } = useSettings();
+  const { churchProfiles } = useChurchProfiles();
+  const { churchRequirements } = useChurchRequirements();
+  const { ceremonyParticipants } = useCeremonyParticipants();
+  const { ceremonyItems } = useCeremonyItems();
+  const { cateringPlans } = useCateringPlans();
+  const { menuItems } = useMenuItems();
+  const { decorPlans } = useDecorPlans();
+  const { attireProfiles } = useAttireProfiles();
+  const { attireItems } = useAttireItems();
+  const { photographyPlans } = usePhotographyPlans();
+  const { photoGroups } = usePhotoGroups();
+  const { musicCues } = useMusicCues();
+  const { musicAVPlans } = useMusicAVPlans();
+  const { giftPlans } = useGiftPlans();
+  const { welcomeKits } = useWelcomeKits();
 
   const health = computePlanningHealth(tasks, decisions);
+  const suggestedCatering = computeSuggestedCateringCounts(guests, 'Wedding');
+  const weddingPrepIssues = detectWeddingPrepIssues({
+    churchProfile: churchProfiles[0],
+    churchRequirements,
+    ceremonyParticipants,
+    ceremonyItems,
+    cateringPlans,
+    menuItems,
+    decorPlans,
+    attireProfiles,
+    attireItems,
+    photographyPlans,
+    photoGroups,
+    musicCues,
+    musicAVPlans,
+    giftPlans,
+    welcomeKits,
+    weddingDateTimeISO: weddingDateTimeISO(settings),
+    confirmedWeddingAttendance: suggestedCatering.confirmedAttendees,
+    favorBuffer: 10,
+  });
   const attentionItems = [
     ...buildAttentionItems(tasks, decisions),
     ...buildGuestAttentionItems(households, guests),
@@ -60,6 +115,7 @@ export function DashboardPage() {
       vendors, contracts, budgetCategories, budgetItems, paymentSchedules, payments, refunds,
       settings.finance.criticalVendorCategories, weddingDateTimeISO(settings), 72, settings.finance.budgetVarianceWarningPercent,
     ),
+    ...buildWeddingPrepAttentionItems(weddingPrepIssues),
   ];
   const upcoming = upcomingIncompleteTasks(tasks, 10);
 
@@ -75,6 +131,7 @@ export function DashboardPage() {
       <GuestSnapshot />
       <LogisticsSnapshot />
       <FinanceSnapshot />
+      <WeddingPrepSnapshot />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <AttentionRequired items={attentionItems} />

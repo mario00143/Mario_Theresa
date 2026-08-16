@@ -16,6 +16,10 @@ import { useVendors } from '@/hooks/useVendors';
 import { useBudgetCategories, useBudgetItems } from '@/hooks/useBudget';
 import { usePayments } from '@/hooks/usePayments';
 import { useSettings } from '@/hooks/useSettings';
+import { useChurchProfiles } from '@/hooks/useChurchProfiles';
+import { useChurchRequirements } from '@/hooks/useChurchRequirements';
+import { useCeremonyItems } from '@/hooks/useCeremonyItems';
+import { useGiftPlans } from '@/hooks/useGiftPlans';
 import { InvalidPaymentAmountError, PaymentLinkedEntityNotFoundError } from '@/data/repositories/paymentRepository';
 import { todayISO } from '@/utils/date';
 import {
@@ -26,10 +30,16 @@ import {
   ROUTE_TYPES,
   VENDOR_CATEGORIES,
   PAYMENT_METHODS,
+  CHURCH_REQUIREMENT_CATEGORIES,
+  CEREMONY_ITEM_CATEGORIES,
+  GIFT_RECIPIENT_TYPES,
   type TravelDirection,
   type RouteType,
   type VendorCategory,
   type PaymentMethod,
+  type ChurchRequirementCategory,
+  type CeremonyItemCategory,
+  type GiftRecipientType,
 } from '@/types';
 
 const MODE_LABELS: Record<QuickAddMode, string> = {
@@ -43,6 +53,9 @@ const MODE_LABELS: Record<QuickAddMode, string> = {
   vendor: 'New Vendor',
   budgetItem: 'New Budget Item',
   payment: 'New Payment',
+  churchRequirement: 'New Church Requirement',
+  ceremonyItem: 'New Ceremony Item',
+  giftPlan: 'New Gift Plan',
 };
 
 export function QuickAddModal() {
@@ -71,6 +84,10 @@ export function QuickAddModal() {
   const { addBudgetItem } = useBudgetItems();
   const { addPayment } = usePayments();
   const { settings } = useSettings();
+  const { churchProfiles } = useChurchProfiles();
+  const { addChurchRequirement } = useChurchRequirements();
+  const { addCeremonyItem } = useCeremonyItems();
+  const { addGiftPlan } = useGiftPlans();
 
   const [mode, setMode] = useState<QuickAddMode>(quickAddMode);
 
@@ -125,6 +142,18 @@ export function QuickAddModal() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Bank Transfer');
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
+  // Church requirement fields
+  const [churchRequirementTitle, setChurchRequirementTitle] = useState('');
+  const [churchRequirementCategory, setChurchRequirementCategory] = useState<ChurchRequirementCategory>(CHURCH_REQUIREMENT_CATEGORIES[0]);
+
+  // Ceremony item fields
+  const [ceremonyItemName, setCeremonyItemName] = useState('');
+  const [ceremonyItemCategory, setCeremonyItemCategory] = useState<CeremonyItemCategory>(CEREMONY_ITEM_CATEGORIES[0]);
+
+  // Gift plan fields
+  const [giftPlanRecipientType, setGiftPlanRecipientType] = useState<GiftRecipientType>(GIFT_RECIPIENT_TYPES[0]);
+  const [giftPlanGiftType, setGiftPlanGiftType] = useState('');
+
   const resetAndClose = () => {
     setTitle('');
     setOwner('');
@@ -159,6 +188,12 @@ export function QuickAddModal() {
     setPaymentDate(todayISO());
     setPaymentMethod('Bank Transfer');
     setPaymentError(null);
+    setChurchRequirementTitle('');
+    setChurchRequirementCategory(CHURCH_REQUIREMENT_CATEGORIES[0]);
+    setCeremonyItemName('');
+    setCeremonyItemCategory(CEREMONY_ITEM_CATEGORIES[0]);
+    setGiftPlanRecipientType(GIFT_RECIPIENT_TYPES[0]);
+    setGiftPlanGiftType('');
     closeQuickAdd();
   };
 
@@ -176,7 +211,10 @@ export function QuickAddModal() {
     (mode === 'route' && routeName.trim().length > 0 && routeOrigin.trim().length > 0 && routeDestination.trim().length > 0) ||
     (mode === 'vendor' && vendorName.trim().length > 0) ||
     (mode === 'budgetItem' && budgetItemCategoryId.length > 0 && budgetItemName.trim().length > 0) ||
-    (mode === 'payment' && paymentVendorId.length > 0 && Number(paymentAmount) > 0 && paymentDate.trim().length > 0);
+    (mode === 'payment' && paymentVendorId.length > 0 && Number(paymentAmount) > 0 && paymentDate.trim().length > 0) ||
+    (mode === 'churchRequirement' && churchRequirementTitle.trim().length > 0 && churchProfiles.length > 0) ||
+    (mode === 'ceremonyItem' && ceremonyItemName.trim().length > 0) ||
+    (mode === 'giftPlan' && giftPlanGiftType.trim().length > 0);
 
   const handleSubmit = () => {
     if (mode === 'task') {
@@ -326,6 +364,40 @@ export function QuickAddModal() {
           setPaymentError('Could not record this payment.');
         }
       }
+    } else if (mode === 'churchRequirement') {
+      if (!churchRequirementTitle.trim() || churchProfiles.length === 0) return;
+      addChurchRequirement({
+        churchProfileId: churchProfiles[0].id,
+        title: churchRequirementTitle.trim(),
+        category: churchRequirementCategory,
+        applicability: 'Applicable',
+        status: 'Not Started',
+        documentRequired: false,
+      });
+      resetAndClose();
+      navigate('/wedding-prep/church');
+    } else if (mode === 'ceremonyItem') {
+      if (!ceremonyItemName.trim()) return;
+      addCeremonyItem({
+        name: ceremonyItemName.trim(),
+        category: ceremonyItemCategory,
+        applicability: 'Applicable',
+        status: 'Not Procured',
+        verificationStatus: 'Not Verified',
+      });
+      resetAndClose();
+      navigate('/wedding-prep/ceremony-items');
+    } else if (mode === 'giftPlan') {
+      if (!giftPlanGiftType.trim()) return;
+      addGiftPlan({
+        recipientType: giftPlanRecipientType,
+        event: 'Wedding',
+        giftType: giftPlanGiftType.trim(),
+        quantity: 1,
+        status: 'Planned',
+      });
+      resetAndClose();
+      navigate('/wedding-prep/gifts-kits');
     }
   };
 
@@ -690,6 +762,83 @@ export function QuickAddModal() {
           )}
           <FieldError>{paymentError}</FieldError>
           <p className="text-xs text-ink-faint">You can link a budget item or payment schedule, and add invoice/receipt details, right after recording this payment.</p>
+        </div>
+      )}
+
+      {mode === 'churchRequirement' && (
+        <div className="space-y-3">
+          {churchProfiles.length === 0 && <p className="text-xs text-warning">Add a church profile in Wedding Prep &gt; Church before adding requirements.</p>}
+          <Field>
+            <Label htmlFor="quick-add-church-requirement-title" required>
+              Title
+            </Label>
+            <Input
+              id="quick-add-church-requirement-title"
+              value={churchRequirementTitle}
+              onChange={(e) => setChurchRequirementTitle(e.target.value)}
+              placeholder="e.g. Submit baptism certificate"
+              autoFocus
+            />
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-church-requirement-category">Category</Label>
+            <Select
+              id="quick-add-church-requirement-category"
+              value={churchRequirementCategory}
+              onChange={(e) => setChurchRequirementCategory(e.target.value as ChurchRequirementCategory)}
+            >
+              {CHURCH_REQUIREMENT_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <p className="text-xs text-ink-faint">Starts as Applicable / Not Started. You can edit applicability, owner, due date, and documents right after creating this requirement.</p>
+        </div>
+      )}
+
+      {mode === 'ceremonyItem' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-ceremony-item-name" required>
+              Item name
+            </Label>
+            <Input id="quick-add-ceremony-item-name" value={ceremonyItemName} onChange={(e) => setCeremonyItemName(e.target.value)} placeholder="e.g. Unity candle" autoFocus />
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-ceremony-item-category">Category</Label>
+            <Select id="quick-add-ceremony-item-category" value={ceremonyItemCategory} onChange={(e) => setCeremonyItemCategory(e.target.value as CeremonyItemCategory)}>
+              {CEREMONY_ITEM_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <p className="text-xs text-ink-faint">Starts as Applicable / Not Procured / Not Verified. You can edit custodian, storage, and required date right after creating this item.</p>
+        </div>
+      )}
+
+      {mode === 'giftPlan' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-gift-recipient-type">Recipient type</Label>
+            <Select id="quick-add-gift-recipient-type" value={giftPlanRecipientType} onChange={(e) => setGiftPlanRecipientType(e.target.value as GiftRecipientType)}>
+              {GIFT_RECIPIENT_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-gift-type" required>
+              Gift type
+            </Label>
+            <Input id="quick-add-gift-type" value={giftPlanGiftType} onChange={(e) => setGiftPlanGiftType(e.target.value)} placeholder="e.g. Silver photo frame" autoFocus />
+          </Field>
+          <p className="text-xs text-ink-faint">Starts as Planned with quantity 1. You can edit quantity, custodian, and distribution owner right after creating this gift plan.</p>
         </div>
       )}
     </Modal>

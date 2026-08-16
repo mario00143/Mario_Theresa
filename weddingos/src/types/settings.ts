@@ -54,10 +54,38 @@ export interface FinanceSettings {
   criticalVendorCategories: VendorCategory[];
 }
 
+/** Relative weights (not required to sum to 100) used to combine per-section wedding-prep readiness into one overall score. */
+export interface WeddingPrepSectionWeights {
+  church: number;
+  ceremony: number;
+  catering: number;
+  decor: number;
+  attire: number;
+  photography: number;
+  musicAV: number;
+  giftsKits: number;
+}
+
+export const DEFAULT_WEDDING_PREP_SECTION_WEIGHTS: WeddingPrepSectionWeights = {
+  church: 20,
+  ceremony: 20,
+  catering: 15,
+  decor: 10,
+  attire: 10,
+  photography: 10,
+  musicAV: 5,
+  giftsKits: 10,
+};
+
+export interface WeddingPrepSettings {
+  sectionWeights: WeddingPrepSectionWeights;
+}
+
 export interface AppSettings {
   couple: CoupleSettings;
   engagement: EngagementSettings;
   wedding: WeddingSettings;
   weddingDetails: WeddingDetailsSettings;
   finance: FinanceSettings;
+  weddingPrep: WeddingPrepSettings;
 }

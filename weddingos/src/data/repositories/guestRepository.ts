@@ -1,6 +1,6 @@
 import type { Guest, GuestEvent, RsvpResponse } from '@/types';
 import { generateId } from '@/lib/id';
-import { guestsStore } from '../stores';
+import { attireProfilesStore, ceremonyParticipantsStore, giftPlansStore, guestsStore } from '../stores';
 
 export type NewGuestInput = Omit<Guest, 'id' | 'createdAt' | 'updatedAt' | 'invitedEvents' | 'rsvpResponses'> &
   Partial<Pick<Guest, 'invitedEvents' | 'rsvpResponses'>>;
@@ -46,8 +46,16 @@ export function updateGuest(id: string, patch: Partial<Omit<Guest, 'id' | 'creat
   );
 }
 
+/** Deletes a guest and un-links (not deletes) any Phase 5 records that optionally referenced it. */
 export function deleteGuest(id: string): void {
   guestsStore.set((prev) => prev.filter((guest) => guest.id !== id));
+  ceremonyParticipantsStore.set((prev) =>
+    prev.map((p) => (p.linkedGuestId === id ? { ...p, linkedGuestId: undefined, updatedAt: nowISO() } : p)),
+  );
+  attireProfilesStore.set((prev) =>
+    prev.map((p) => (p.linkedGuestId === id ? { ...p, linkedGuestId: undefined, updatedAt: nowISO() } : p)),
+  );
+  giftPlansStore.set((prev) => prev.map((p) => (p.linkedGuestId === id ? { ...p, linkedGuestId: undefined, updatedAt: nowISO() } : p)));
 }
 
 export function moveGuestToHousehold(guestId: string, newHouseholdId: string): void {

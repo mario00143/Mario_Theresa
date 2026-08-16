@@ -3,6 +3,15 @@ import { addMonths, format, subMonths } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useTasks } from '@/hooks/useTasks';
+import { useChurchProfiles } from '@/hooks/useChurchProfiles';
+import { useChurchRequirements } from '@/hooks/useChurchRequirements';
+import { useCateringPlans } from '@/hooks/useCateringPlans';
+import { useDecorPlans } from '@/hooks/useDecorPlans';
+import { useAttireProfiles } from '@/hooks/useAttireProfiles';
+import { useGroomingAppointments } from '@/hooks/useGroomingAppointments';
+import { usePhotographyPlans } from '@/hooks/usePhotographyPlans';
+import { useMusicAVPlans } from '@/hooks/useMusicAVPlans';
+import { buildWeddingPrepKeyDates } from '@/utils/weddingPrepCalendar';
 import { MonthView } from '@/features/calendar/MonthView';
 import { AgendaView } from '@/features/calendar/AgendaView';
 
@@ -10,6 +19,17 @@ const WEDDING_MONTH_ANCHOR = new Date('2027-01-01T00:00:00');
 
 export function CalendarPage() {
   const { tasks } = useTasks();
+  const { churchProfiles } = useChurchProfiles();
+  const { churchRequirements } = useChurchRequirements();
+  const { cateringPlans } = useCateringPlans();
+  const { decorPlans } = useDecorPlans();
+  const { attireProfiles } = useAttireProfiles();
+  const { groomingAppointments } = useGroomingAppointments();
+  const { photographyPlans } = usePhotographyPlans();
+  const { musicAVPlans } = useMusicAVPlans();
+  const weddingPrepEvents = buildWeddingPrepKeyDates(
+    churchProfiles, churchRequirements, cateringPlans, decorPlans, attireProfiles, groomingAppointments, photographyPlans, musicAVPlans,
+  );
   const [view, setView] = useState<'month' | 'agenda'>('month');
   const [monthAnchor, setMonthAnchor] = useState(WEDDING_MONTH_ANCHOR);
 
@@ -45,11 +65,11 @@ export function CalendarPage() {
             <p className="text-sm font-semibold text-ink">{format(monthAnchor, 'MMMM yyyy')}</p>
             <Button variant="ghost" size="sm" icon={<ChevronRight className="size-4" aria-hidden="true" />} onClick={() => setMonthAnchor((m) => addMonths(m, 1))} aria-label="Next month" />
           </div>
-          <MonthView monthAnchor={monthAnchor} tasks={tasks} />
+          <MonthView monthAnchor={monthAnchor} tasks={tasks} weddingPrepEvents={weddingPrepEvents} />
         </>
       )}
 
-      {view === 'agenda' && <AgendaView tasks={tasks} />}
+      {view === 'agenda' && <AgendaView tasks={tasks} weddingPrepEvents={weddingPrepEvents} />}
     </div>
   );
 }

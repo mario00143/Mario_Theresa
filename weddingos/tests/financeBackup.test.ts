@@ -26,15 +26,15 @@ const FINANCE_KEYS = [
   'refunds',
 ] as const;
 
-describe('version 4 backup export', () => {
+describe('version 4+ backup export', () => {
   beforeEach(() => {
     resetToDemoData();
   });
 
-  it('exports version 4 with all finance collections included', () => {
+  it('exports the current version with all finance collections included', () => {
     const backup = exportBackup();
-    expect(backup.version).toBe(4);
-    expect(BACKUP_VERSION).toBe(4);
+    expect(backup.version).toBe(BACKUP_VERSION);
+    expect(BACKUP_VERSION).toBeGreaterThanOrEqual(4);
     expect(backup.vendors.length).toBeGreaterThan(0);
     expect(backup.vendorContacts.length).toBeGreaterThan(0);
     expect(backup.vendorQuotes.length).toBeGreaterThan(0);

@@ -1,6 +1,6 @@
 import type { Hotel } from '@/types';
 import { generateId } from '@/lib/id';
-import { hotelsStore, roomAssignmentsStore, roomsStore, roomTypesStore } from '../stores';
+import { hotelsStore, roomAssignmentsStore, roomsStore, roomTypesStore, welcomeKitsStore } from '../stores';
 
 export type NewHotelInput = Omit<Hotel, 'id' | 'createdAt' | 'updatedAt'>;
 
@@ -31,4 +31,5 @@ export function deleteHotel(id: string): void {
   roomTypesStore.set((prev) => prev.filter((rt) => rt.hotelId !== id));
   roomsStore.set((prev) => prev.filter((r) => r.hotelId !== id));
   roomAssignmentsStore.set((prev) => prev.filter((ra) => !roomIdsAtHotel.has(ra.roomId)));
+  welcomeKitsStore.set((prev) => prev.map((k) => (k.hotelId === id ? { ...k, hotelId: undefined, updatedAt: nowISO() } : k)));
 }
