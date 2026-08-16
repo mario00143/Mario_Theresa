@@ -19,11 +19,18 @@ import { useRooms } from '@/hooks/useRooms';
 import { useVehicles } from '@/hooks/useVehicles';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useTransportRoutes } from '@/hooks/useTransportRoutes';
+import { useVendors } from '@/hooks/useVendors';
+import { useVendorContacts } from '@/hooks/useVendorContacts';
+import { useVendorQuotes } from '@/hooks/useVendorQuotes';
+import { useContracts } from '@/hooks/useContracts';
+import { useBudgetItems } from '@/hooks/useBudget';
+import { usePayments } from '@/hooks/usePayments';
 import { searchAll } from '@/utils/search';
 import { formatDisplayDate } from '@/utils/date';
+import { formatCurrency } from '@/utils/currency';
 
 export function GlobalSearchModal() {
-  const { searchOpen, closeSearch, openTaskDetail, openDecisionDetail, openHouseholdDetail, openGuestDetail, openTravelDetail } = useUI();
+  const { searchOpen, closeSearch, openTaskDetail, openDecisionDetail, openHouseholdDetail, openGuestDetail, openTravelDetail, openVendorDetail } = useUI();
   const navigate = useNavigate();
   const { tasks } = useTasks();
   const { decisions } = useDecisions();
@@ -35,6 +42,12 @@ export function GlobalSearchModal() {
   const { vehicles } = useVehicles();
   const { drivers } = useDrivers();
   const { routes } = useTransportRoutes();
+  const { vendors } = useVendors();
+  const { vendorContacts } = useVendorContacts();
+  const { vendorQuotes } = useVendorQuotes();
+  const { contracts } = useContracts();
+  const { budgetItems } = useBudgetItems();
+  const { payments } = usePayments();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,7 +59,10 @@ export function GlobalSearchModal() {
     }
   }, [searchOpen]);
 
-  const results = searchAll(tasks, decisions, households, guests, travelSegments, hotels, rooms, vehicles, drivers, routes, query);
+  const results = searchAll(
+    tasks, decisions, households, guests, travelSegments, hotels, rooms, vehicles, drivers, routes,
+    vendors, vendorContacts, vendorQuotes, contracts, budgetItems, payments, query,
+  );
   const hasQuery = query.trim().length > 0;
   const hasResults =
     results.tasks.length > 0 ||
@@ -58,10 +74,16 @@ export function GlobalSearchModal() {
     results.rooms.length > 0 ||
     results.vehicles.length > 0 ||
     results.drivers.length > 0 ||
-    results.routes.length > 0;
+    results.routes.length > 0 ||
+    results.vendors.length > 0 ||
+    results.vendorQuotes.length > 0 ||
+    results.contracts.length > 0 ||
+    results.budgetItems.length > 0 ||
+    results.payments.length > 0;
   const householdById = new Map(households.map((h) => [h.id, h]));
   const guestById = new Map(guests.map((g) => [g.id, g]));
   const hotelById = new Map(hotels.map((h) => [h.id, h]));
+  const vendorById = new Map(vendors.map((v) => [v.id, v]));
 
   return (
     <Modal open={searchOpen} onClose={closeSearch} title="Search" size="lg">
@@ -71,7 +93,7 @@ export function GlobalSearchModal() {
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search tasks, decisions, households, guests, travel, hotels, transport…"
+          placeholder="Search tasks, decisions, households, guests, travel, hotels, transport, vendors, budget…"
           className="w-full bg-transparent text-sm outline-none placeholder:text-ink-faint"
           aria-label="Search query"
         />
@@ -80,7 +102,7 @@ export function GlobalSearchModal() {
       {!hasQuery && (
         <EmptyState
           title="Start typing to search"
-          description="Search across tasks, decisions, households, guests, travel, hotels, and transport by name, service number, booking reference, registration number, or route."
+          description="Search across tasks, decisions, households, guests, travel, hotels, transport, vendors, quotes, contracts, budget items, and payments by name, reference, or route."
         />
       )}
 
@@ -334,6 +356,111 @@ export function GlobalSearchModal() {
                   </div>
                   <p className="mt-1 text-xs text-ink-faint">
                     {route.origin} → {route.destination}
+                  </p>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {hasQuery && (results.vendors.length > 0 || results.vendorQuotes.length > 0 || results.contracts.length > 0 || results.budgetItems.length > 0 || results.payments.length > 0) && (
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">
+            Vendors & Budget ({results.vendors.length + results.vendorQuotes.length + results.contracts.length + results.budgetItems.length + results.payments.length})
+          </p>
+          <ul className="space-y-1">
+            {results.vendors.map((vendor) => (
+              <li key={vendor.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    openVendorDetail(vendor.id);
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{vendor.name}</p>
+                    <Badge tone="neutral">Vendor</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">{vendor.category} · {vendor.city ?? 'No city'}</p>
+                </button>
+              </li>
+            ))}
+            {results.vendorQuotes.map((quote) => (
+              <li key={quote.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    openVendorDetail(quote.vendorId);
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{quote.quoteReference}</p>
+                    <Badge tone="neutral">Quote</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">
+                    {vendorById.get(quote.vendorId)?.name ?? 'Unknown vendor'} · {formatCurrency(quote.totalAmount, quote.currency)}
+                  </p>
+                </button>
+              </li>
+            ))}
+            {results.contracts.map((contract) => (
+              <li key={contract.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    openVendorDetail(contract.vendorId);
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{contract.contractReference}</p>
+                    <Badge tone="neutral">Contract</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">{vendorById.get(contract.vendorId)?.name ?? 'Unknown vendor'}</p>
+                </button>
+              </li>
+            ))}
+            {results.budgetItems.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (item.vendorId) openVendorDetail(item.vendorId);
+                    else navigate('/vendors/budget');
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{item.itemName}</p>
+                    <Badge tone="neutral">Budget item</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">{item.vendorId ? (vendorById.get(item.vendorId)?.name ?? 'Unknown vendor') : 'No vendor linked'}</p>
+                </button>
+              </li>
+            ))}
+            {results.payments.map((payment) => (
+              <li key={payment.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    openVendorDetail(payment.vendorId);
+                    closeSearch();
+                  }}
+                  className="w-full rounded-lg border border-transparent px-3 py-2.5 text-left hover:border-line hover:bg-surface-subtle"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-ink truncate">{payment.referenceNumber ?? payment.invoiceReference ?? payment.receiptReference}</p>
+                    <Badge tone="neutral">Payment</Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-faint">
+                    {vendorById.get(payment.vendorId)?.name ?? 'Unknown vendor'} · {formatCurrency(payment.amount)}
                   </p>
                 </button>
               </li>

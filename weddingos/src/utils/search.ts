@@ -1,4 +1,21 @@
-import type { Decision, Driver, Guest, Hotel, Household, Room, Task, TransportRoute, TravelSegment, Vehicle } from '@/types';
+import type {
+  BudgetItem,
+  Contract,
+  Decision,
+  Driver,
+  Guest,
+  Hotel,
+  Household,
+  Payment,
+  Room,
+  Task,
+  TransportRoute,
+  TravelSegment,
+  Vehicle,
+  Vendor,
+  VendorContact,
+  VendorQuote,
+} from '@/types';
 
 export interface SearchResults {
   tasks: Task[];
@@ -11,6 +28,11 @@ export interface SearchResults {
   vehicles: Vehicle[];
   drivers: Driver[];
   routes: TransportRoute[];
+  vendors: Vendor[];
+  vendorQuotes: VendorQuote[];
+  contracts: Contract[];
+  budgetItems: BudgetItem[];
+  payments: Payment[];
 }
 
 function matches(haystack: (string | undefined)[], query: string): boolean {
@@ -29,11 +51,20 @@ export function searchAll(
   vehicles: Vehicle[],
   drivers: Driver[],
   routes: TransportRoute[],
+  vendors: Vendor[],
+  vendorContacts: VendorContact[],
+  vendorQuotes: VendorQuote[],
+  contracts: Contract[],
+  budgetItems: BudgetItem[],
+  payments: Payment[],
   query: string,
 ): SearchResults {
   const trimmed = query.trim();
   if (!trimmed) {
-    return { tasks: [], decisions: [], households: [], guests: [], travelSegments: [], hotels: [], rooms: [], vehicles: [], drivers: [], routes: [] };
+    return {
+      tasks: [], decisions: [], households: [], guests: [], travelSegments: [], hotels: [], rooms: [], vehicles: [], drivers: [], routes: [],
+      vendors: [], vendorQuotes: [], contracts: [], budgetItems: [], payments: [],
+    };
   }
 
   const matchedTasks = tasks.filter((task) =>
@@ -54,6 +85,23 @@ export function searchAll(
   const matchedDrivers = drivers.filter((driver) => matches([driver.name, driver.phone], trimmed));
   const matchedRoutes = routes.filter((route) => matches([route.name, route.origin, route.destination], trimmed));
 
+  const vendorContactsByVendorId = new Map<string, VendorContact[]>();
+  for (const contact of vendorContacts) {
+    const list = vendorContactsByVendorId.get(contact.vendorId) ?? [];
+    list.push(contact);
+    vendorContactsByVendorId.set(contact.vendorId, list);
+  }
+  const matchedVendors = vendors.filter((vendor) => {
+    const contactFields = (vendorContactsByVendorId.get(vendor.id) ?? []).flatMap((c) => [c.name, c.phone, c.email]);
+    return matches([vendor.name, vendor.city, vendor.email, vendor.phone, vendor.bookingOwner, ...contactFields], trimmed);
+  });
+  const matchedVendorQuotes = vendorQuotes.filter((quote) => matches([quote.quoteReference], trimmed));
+  const matchedContracts = contracts.filter((contract) => matches([contract.contractReference], trimmed));
+  const matchedBudgetItems = budgetItems.filter((item) => matches([item.itemName], trimmed));
+  const matchedPayments = payments.filter((payment) =>
+    matches([payment.referenceNumber, payment.invoiceReference, payment.receiptReference], trimmed),
+  );
+
   return {
     tasks: matchedTasks.slice(0, 20),
     decisions: matchedDecisions.slice(0, 20),
@@ -65,5 +113,10 @@ export function searchAll(
     vehicles: matchedVehicles.slice(0, 20),
     drivers: matchedDrivers.slice(0, 20),
     routes: matchedRoutes.slice(0, 20),
+    vendors: matchedVendors.slice(0, 20),
+    vendorQuotes: matchedVendorQuotes.slice(0, 20),
+    contracts: matchedContracts.slice(0, 20),
+    budgetItems: matchedBudgetItems.slice(0, 20),
+    payments: matchedPayments.slice(0, 20),
   };
 }

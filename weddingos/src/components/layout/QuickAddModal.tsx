@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { Field, Input, Label, Select } from '@/components/ui/Field';
+import { Field, FieldError, Input, Label, Select } from '@/components/ui/Field';
 import { useUI, type QuickAddMode } from '@/context/UIContext';
 import { useTasks } from '@/hooks/useTasks';
 import { useDecisions } from '@/hooks/useDecisions';
@@ -12,7 +12,25 @@ import { useGuests } from '@/hooks/useGuests';
 import { useTravel } from '@/hooks/useTravel';
 import { useHotels } from '@/hooks/useHotels';
 import { useTransportRoutes } from '@/hooks/useTransportRoutes';
-import { PRIORITIES, HOUSEHOLD_SIDES, AGE_CATEGORIES, TRAVEL_DIRECTIONS, ROUTE_TYPES, type TravelDirection, type RouteType } from '@/types';
+import { useVendors } from '@/hooks/useVendors';
+import { useBudgetCategories, useBudgetItems } from '@/hooks/useBudget';
+import { usePayments } from '@/hooks/usePayments';
+import { useSettings } from '@/hooks/useSettings';
+import { InvalidPaymentAmountError, PaymentLinkedEntityNotFoundError } from '@/data/repositories/paymentRepository';
+import { todayISO } from '@/utils/date';
+import {
+  PRIORITIES,
+  HOUSEHOLD_SIDES,
+  AGE_CATEGORIES,
+  TRAVEL_DIRECTIONS,
+  ROUTE_TYPES,
+  VENDOR_CATEGORIES,
+  PAYMENT_METHODS,
+  type TravelDirection,
+  type RouteType,
+  type VendorCategory,
+  type PaymentMethod,
+} from '@/types';
 
 const MODE_LABELS: Record<QuickAddMode, string> = {
   task: 'New Task',
@@ -22,11 +40,23 @@ const MODE_LABELS: Record<QuickAddMode, string> = {
   travel: 'New Travel',
   hotel: 'New Hotel',
   route: 'New Route',
+  vendor: 'New Vendor',
+  budgetItem: 'New Budget Item',
+  payment: 'New Payment',
 };
 
 export function QuickAddModal() {
-  const { quickAddOpen, quickAddMode, closeQuickAdd, openTaskDetail, openDecisionDetail, openHouseholdDetail, openGuestDetail, openTravelDetail } =
-    useUI();
+  const {
+    quickAddOpen,
+    quickAddMode,
+    closeQuickAdd,
+    openTaskDetail,
+    openDecisionDetail,
+    openHouseholdDetail,
+    openGuestDetail,
+    openTravelDetail,
+    openVendorDetail,
+  } = useUI();
   const navigate = useNavigate();
   const { addTask } = useTasks();
   const { addDecision } = useDecisions();
@@ -36,6 +66,11 @@ export function QuickAddModal() {
   const { addTravelSegment } = useTravel();
   const { addHotel } = useHotels();
   const { addTransportRoute } = useTransportRoutes();
+  const { vendors, addVendor } = useVendors();
+  const { budgetCategories } = useBudgetCategories();
+  const { addBudgetItem } = useBudgetItems();
+  const { addPayment } = usePayments();
+  const { settings } = useSettings();
 
   const [mode, setMode] = useState<QuickAddMode>(quickAddMode);
 
@@ -74,6 +109,22 @@ export function QuickAddModal() {
   const [routeOrigin, setRouteOrigin] = useState('');
   const [routeDestination, setRouteDestination] = useState('');
 
+  // Vendor fields
+  const [vendorName, setVendorName] = useState('');
+  const [vendorCategory, setVendorCategory] = useState<VendorCategory>(VENDOR_CATEGORIES[0]);
+
+  // Budget item fields
+  const [budgetItemCategoryId, setBudgetItemCategoryId] = useState('');
+  const [budgetItemName, setBudgetItemName] = useState('');
+  const [budgetItemAmount, setBudgetItemAmount] = useState('');
+
+  // Payment fields
+  const [paymentVendorId, setPaymentVendorId] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentDate, setPaymentDate] = useState(todayISO());
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Bank Transfer');
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
   const resetAndClose = () => {
     setTitle('');
     setOwner('');
@@ -98,6 +149,16 @@ export function QuickAddModal() {
     setRouteType('Airport Pickup');
     setRouteOrigin('');
     setRouteDestination('');
+    setVendorName('');
+    setVendorCategory(VENDOR_CATEGORIES[0]);
+    setBudgetItemCategoryId('');
+    setBudgetItemName('');
+    setBudgetItemAmount('');
+    setPaymentVendorId('');
+    setPaymentAmount('');
+    setPaymentDate(todayISO());
+    setPaymentMethod('Bank Transfer');
+    setPaymentError(null);
     closeQuickAdd();
   };
 
@@ -112,7 +173,10 @@ export function QuickAddModal() {
     (mode === 'guest' && guestName.trim().length > 0 && guestHouseholdId.length > 0) ||
     (mode === 'travel' && travelGuestId.length > 0 && travelOrigin.trim().length > 0 && travelDestination.trim().length > 0) ||
     (mode === 'hotel' && hotelName.trim().length > 0 && hotelCity.trim().length > 0) ||
-    (mode === 'route' && routeName.trim().length > 0 && routeOrigin.trim().length > 0 && routeDestination.trim().length > 0);
+    (mode === 'route' && routeName.trim().length > 0 && routeOrigin.trim().length > 0 && routeDestination.trim().length > 0) ||
+    (mode === 'vendor' && vendorName.trim().length > 0) ||
+    (mode === 'budgetItem' && budgetItemCategoryId.length > 0 && budgetItemName.trim().length > 0) ||
+    (mode === 'payment' && paymentVendorId.length > 0 && Number(paymentAmount) > 0 && paymentDate.trim().length > 0);
 
   const handleSubmit = () => {
     if (mode === 'task') {
@@ -219,6 +283,49 @@ export function QuickAddModal() {
       });
       resetAndClose();
       navigate('/logistics/transport');
+    } else if (mode === 'vendor') {
+      if (!vendorName.trim()) return;
+      const vendor = addVendor({
+        name: vendorName.trim(),
+        category: vendorCategory,
+        status: 'Researching',
+        event: 'Wedding',
+        gstApplicable: false,
+      });
+      resetAndClose();
+      openVendorDetail(vendor.id);
+    } else if (mode === 'budgetItem') {
+      if (!budgetItemCategoryId || !budgetItemName.trim()) return;
+      addBudgetItem({
+        categoryId: budgetItemCategoryId,
+        event: 'Wedding',
+        itemName: budgetItemName.trim(),
+        originalBudget: Number(budgetItemAmount) || 0,
+        approvalStatus: 'Draft',
+      });
+      resetAndClose();
+      navigate('/vendors/budget');
+    } else if (mode === 'payment') {
+      const amount = Number(paymentAmount);
+      if (!paymentVendorId || !(amount > 0) || !paymentDate.trim()) return;
+      try {
+        addPayment({
+          vendorId: paymentVendorId,
+          paymentDate,
+          amount,
+          paymentMethod,
+          invoiceReceived: false,
+          receiptReceived: false,
+        });
+        resetAndClose();
+        openVendorDetail(paymentVendorId);
+      } catch (err) {
+        if (err instanceof InvalidPaymentAmountError || err instanceof PaymentLinkedEntityNotFoundError) {
+          setPaymentError(err.message);
+        } else {
+          setPaymentError('Could not record this payment.');
+        }
+      }
     }
   };
 
@@ -239,7 +346,7 @@ export function QuickAddModal() {
         </>
       }
     >
-      <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg border border-line p-1 sm:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg border border-line p-1 sm:grid-cols-5">
         {(Object.keys(MODE_LABELS) as QuickAddMode[]).map((m) => (
           <button
             key={m}
@@ -485,6 +592,104 @@ export function QuickAddModal() {
             </Field>
           </div>
           <p className="text-xs text-ink-faint">You can assign a vehicle and driver right after creating this route.</p>
+        </div>
+      )}
+
+      {mode === 'vendor' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-vendor-name" required>
+              Vendor name
+            </Label>
+            <Input id="quick-add-vendor-name" value={vendorName} onChange={(e) => setVendorName(e.target.value)} placeholder="e.g. Fernwood Décor Studio" autoFocus />
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-vendor-category">Category</Label>
+            <Select id="quick-add-vendor-category" value={vendorCategory} onChange={(e) => setVendorCategory(e.target.value as VendorCategory)}>
+              {VENDOR_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <p className="text-xs text-ink-faint">Starts as "Researching". You can add contacts, quotes, and a contract right after creating this vendor.</p>
+        </div>
+      )}
+
+      {mode === 'budgetItem' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-budget-category" required>
+              Category
+            </Label>
+            <Select id="quick-add-budget-category" value={budgetItemCategoryId} onChange={(e) => setBudgetItemCategoryId(e.target.value)}>
+              <option value="">Select a category…</option>
+              {budgetCategories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-budget-item-name" required>
+              Item name
+            </Label>
+            <Input id="quick-add-budget-item-name" value={budgetItemName} onChange={(e) => setBudgetItemName(e.target.value)} placeholder="e.g. Stage backdrop" autoFocus />
+          </Field>
+          <Field>
+            <Label htmlFor="quick-add-budget-item-amount">Original budget</Label>
+            <Input id="quick-add-budget-item-amount" type="number" min={0} value={budgetItemAmount} onChange={(e) => setBudgetItemAmount(e.target.value)} placeholder="0" />
+          </Field>
+          <p className="text-xs text-ink-faint">You can link a vendor and set forecast/committed/actual amounts right after creating this item.</p>
+        </div>
+      )}
+
+      {mode === 'payment' && (
+        <div className="space-y-3">
+          <Field>
+            <Label htmlFor="quick-add-payment-vendor" required>
+              Vendor
+            </Label>
+            <Select id="quick-add-payment-vendor" value={paymentVendorId} onChange={(e) => setPaymentVendorId(e.target.value)} autoFocus>
+              <option value="">Select a vendor…</option>
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field>
+              <Label htmlFor="quick-add-payment-amount" required>
+                Amount
+              </Label>
+              <Input id="quick-add-payment-amount" type="number" min={0} value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
+            </Field>
+            <Field>
+              <Label htmlFor="quick-add-payment-date" required>
+                Payment date
+              </Label>
+              <Input id="quick-add-payment-date" type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
+            </Field>
+          </div>
+          <Field>
+            <Label htmlFor="quick-add-payment-method">Payment method</Label>
+            <Select id="quick-add-payment-method" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          {paymentMethod === 'Cash' && Number(paymentAmount) >= settings.finance.largeCashWarningThreshold && (
+            <p className="text-xs text-warning">This is a large cash payment (≥ the configured threshold). Consider a traceable method.</p>
+          )}
+          <FieldError>{paymentError}</FieldError>
+          <p className="text-xs text-ink-faint">You can link a budget item or payment schedule, and add invoice/receipt details, right after recording this payment.</p>
         </div>
       )}
     </Modal>

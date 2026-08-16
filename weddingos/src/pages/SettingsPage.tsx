@@ -2,11 +2,13 @@ import { NavLink, Route, Routes } from 'react-router-dom';
 import { cn } from '@/lib/cn';
 import { EventDetailsForm } from '@/features/settings/EventDetailsForm';
 import { OwnerRolesManager } from '@/features/settings/OwnerRolesManager';
+import { FinanceSettingsForm } from '@/features/settings/FinanceSettingsForm';
 import { DataManagement } from '@/features/settings/DataManagement';
 
 const TABS = [
   { to: '/settings', label: 'Event Details', end: true },
   { to: '/settings/owners', label: 'Owner Roles', end: false },
+  { to: '/settings/finance', label: 'Finance', end: false },
   { to: '/settings/data', label: 'Data Management', end: false },
 ];
 
@@ -39,6 +41,7 @@ export function SettingsPage() {
       <Routes>
         <Route index element={<EventDetailsForm />} />
         <Route path="owners" element={<OwnerRolesManager />} />
+        <Route path="finance" element={<FinanceSettingsForm />} />
         <Route path="data" element={<DataManagement />} />
       </Routes>
     </div>

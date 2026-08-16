@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
-export type QuickAddMode = 'task' | 'decision' | 'household' | 'guest' | 'travel' | 'hotel' | 'route';
+export type QuickAddMode = 'task' | 'decision' | 'household' | 'guest' | 'travel' | 'hotel' | 'route' | 'vendor' | 'budgetItem' | 'payment';
 
 interface UIContextValue {
   selectedTaskId: string | null;
