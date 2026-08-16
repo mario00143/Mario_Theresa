@@ -11,6 +11,10 @@ import { EVENTS, PRIORITIES, TASK_STATUSES, WORKSTREAMS, type Task, type TaskSta
 import { useUI } from '@/context/UIContext';
 import { useTask, useTasks } from '@/hooks/useTasks';
 import { useOwners } from '@/hooks/useOwners';
+import { useVendors } from '@/hooks/useVendors';
+import { useBudgetItems } from '@/hooks/useBudget';
+import { usePaymentSchedules } from '@/hooks/usePaymentSchedules';
+import { useContracts } from '@/hooks/useContracts';
 import { formatDisplayDate } from '@/utils/date';
 import { getDependencyStatus, isProtectedPeriodViolation, validateTask } from '@/utils/taskLogic';
 import { PROTECTED_PERIOD_MESSAGE } from '@/lib/constants';
@@ -19,10 +23,14 @@ import { SubtasksEditor } from './SubtasksEditor';
 import { DependenciesEditor } from './DependenciesEditor';
 
 export function TaskDetailDrawer() {
-  const { selectedTaskId, closeTaskDetail, openTaskDetail } = useUI();
+  const { selectedTaskId, closeTaskDetail, openTaskDetail, openVendorDetail } = useUI();
   const task = useTask(selectedTaskId ?? undefined);
   const { tasks, updateTask, deleteTask, duplicateTask, addSubtask, updateSubtask, deleteSubtask } = useTasks();
   const { owners } = useOwners();
+  const { vendors } = useVendors();
+  const { budgetItems } = useBudgetItems();
+  const { paymentSchedules } = usePaymentSchedules();
+  const { contracts } = useContracts();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [tagsInput, setTagsInput] = useState('');
 
@@ -328,6 +336,121 @@ export function TaskDetailDrawer() {
             onToggle={(subtaskId, completed) => updateSubtask(task.id, subtaskId, { completed })}
             onDelete={(subtaskId) => deleteSubtask(task.id, subtaskId)}
           />
+
+          <section className="space-y-3 border-t border-line-soft pt-5">
+            <div>
+              <p className="text-sm font-semibold text-ink">Linked finance records</p>
+              <p className="text-xs text-ink-faint mt-0.5">Optional — connect this task to a vendor, budget item, payment schedule, or contract.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <Label htmlFor="td-related-vendor">Vendor</Label>
+                <Select
+                  id="td-related-vendor"
+                  value={task.relatedVendorId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedVendorId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {vendors.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field>
+                <Label htmlFor="td-related-budget-item">Budget item</Label>
+                <Select
+                  id="td-related-budget-item"
+                  value={task.relatedBudgetItemId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedBudgetItemId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {budgetItems.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.itemName}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <Label htmlFor="td-related-schedule">Payment schedule</Label>
+                <Select
+                  id="td-related-schedule"
+                  value={task.relatedPaymentScheduleId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedPaymentScheduleId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {paymentSchedules.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.milestone}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field>
+                <Label htmlFor="td-related-contract">Contract</Label>
+                <Select
+                  id="td-related-contract"
+                  value={task.relatedContractId ?? ''}
+                  onChange={(e) => updateTask(task.id, { relatedContractId: e.target.value || undefined })}
+                >
+                  <option value="">None</option>
+                  {contracts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.contractReference ?? c.id}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            {(task.relatedVendorId || task.relatedBudgetItemId || task.relatedPaymentScheduleId || task.relatedContractId) && (
+              <div className="flex flex-wrap gap-1.5">
+                {task.relatedVendorId && (
+                  <button type="button" onClick={() => openVendorDetail(task.relatedVendorId!)}>
+                    <Badge tone="info">Vendor: {vendors.find((v) => v.id === task.relatedVendorId)?.name ?? 'Unknown'}</Badge>
+                  </button>
+                )}
+                {task.relatedBudgetItemId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const item = budgetItems.find((i) => i.id === task.relatedBudgetItemId);
+                      if (item?.vendorId) openVendorDetail(item.vendorId);
+                    }}
+                  >
+                    <Badge tone="neutral">Budget item: {budgetItems.find((i) => i.id === task.relatedBudgetItemId)?.itemName ?? 'Unknown'}</Badge>
+                  </button>
+                )}
+                {task.relatedPaymentScheduleId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const schedule = paymentSchedules.find((s) => s.id === task.relatedPaymentScheduleId);
+                      if (schedule) openVendorDetail(schedule.vendorId);
+                    }}
+                  >
+                    <Badge tone="neutral">Schedule: {paymentSchedules.find((s) => s.id === task.relatedPaymentScheduleId)?.milestone ?? 'Unknown'}</Badge>
+                  </button>
+                )}
+                {task.relatedContractId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const contract = contracts.find((c) => c.id === task.relatedContractId);
+                      if (contract) openVendorDetail(contract.vendorId);
+                    }}
+                  >
+                    <Badge tone="neutral">
+                      Contract: {contracts.find((c) => c.id === task.relatedContractId)?.contractReference ?? 'Unknown'}
+                    </Badge>
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
 
           <DependenciesEditor
             task={task}

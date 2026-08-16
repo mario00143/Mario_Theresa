@@ -1,4 +1,21 @@
-import type { Decision, Guest, Household, RoomAssignment, Task, TransportAssignment, TransportRoute, TravelSegment, Vehicle } from '@/types';
+import type {
+  BudgetCategory,
+  BudgetItem,
+  Contract,
+  Decision,
+  Guest,
+  Household,
+  Payment,
+  PaymentSchedule,
+  Refund,
+  RoomAssignment,
+  Task,
+  TransportAssignment,
+  TransportRoute,
+  TravelSegment,
+  Vehicle,
+  Vendor,
+} from '@/types';
 import {
   completionPercentage,
   criticalCompletionPercentage,
@@ -13,7 +30,10 @@ import { isFollowUpOverdue } from './invitationLogic';
 import { detectDataIssues } from './guestDataQuality';
 import { findGuestsRequiringAccommodationUnassigned } from './logisticsStats';
 import { isTransportAssignmentActive, seatsAssignedForRoute } from './transportLogic';
-import { daysUntil } from './date';
+import { computeCategorySummary } from './budgetLogic';
+import { computePaymentScheduleStatus } from './paymentLogic';
+import { isCriticalVendorNotReconfirmed } from './vendorReadiness';
+import { daysUntil, todayISO } from './date';
 
 export interface PlanningHealth {
   overallCompletion: number;
@@ -48,7 +68,7 @@ export interface AttentionItem {
   id: string;
   severity: AttentionSeverity;
   message: string;
-  linkType: 'task' | 'decision' | 'household' | 'guest' | 'route' | 'travel';
+  linkType: 'task' | 'decision' | 'household' | 'guest' | 'route' | 'travel' | 'vendor';
   linkId: string;
 }
 
@@ -248,6 +268,96 @@ export function buildLogisticsAttentionItems(
         message: `Route "${route.name}" has no driver assigned`,
         linkType: 'route',
         linkId: '/logistics/transport',
+      });
+    }
+  }
+
+  return items;
+}
+
+const VENDOR_STATUSES_EXPECTING_CONTRACT: Vendor['status'][] = ['Selected', 'Contracted', 'Confirmed', 'Completed'];
+
+/**
+ * Finance-related Attention Required items: overdue payments, vendors
+ * missing a contract, critical vendors not reconfirmed within the
+ * threshold window, budget categories over their plan, and overdue
+ * refunds. Deliberately narrow — the full 17-check list lives in
+ * Vendors & Budget > Reports > Data Issues, not on the main dashboard.
+ */
+export function buildFinanceAttentionItems(
+  vendors: Vendor[],
+  contracts: Contract[],
+  budgetCategories: BudgetCategory[],
+  budgetItems: BudgetItem[],
+  paymentSchedules: PaymentSchedule[],
+  payments: Payment[],
+  refunds: Refund[],
+  criticalVendorCategories: string[],
+  weddingDateTimeISO: string,
+  reconfirmationHoursThreshold: number,
+  budgetVarianceWarningPercent: number,
+): AttentionItem[] {
+  const items: AttentionItem[] = [];
+  const vendorById = new Map(vendors.map((v) => [v.id, v]));
+
+  for (const schedule of paymentSchedules) {
+    if (computePaymentScheduleStatus(schedule, payments) === 'Overdue') {
+      const vendor = vendorById.get(schedule.vendorId);
+      items.push({
+        id: `finance-payment-overdue-${schedule.id}`,
+        severity: 'critical',
+        message: `Payment "${schedule.milestone}" overdue for "${vendor?.name ?? 'a vendor'}"`,
+        linkType: 'vendor',
+        linkId: schedule.vendorId,
+      });
+    }
+  }
+
+  const contractsByVendor = new Set(contracts.map((c) => c.vendorId));
+  for (const vendor of vendors) {
+    if (VENDOR_STATUSES_EXPECTING_CONTRACT.includes(vendor.status) && !contractsByVendor.has(vendor.id)) {
+      items.push({
+        id: `finance-contract-missing-${vendor.id}`,
+        severity: 'warning',
+        message: `"${vendor.name}" is ${vendor.status} but has no contract on file`,
+        linkType: 'vendor',
+        linkId: vendor.id,
+      });
+    }
+    if (isCriticalVendorNotReconfirmed(vendor, criticalVendorCategories, weddingDateTimeISO, reconfirmationHoursThreshold, new Date().toISOString())) {
+      items.push({
+        id: `finance-not-reconfirmed-${vendor.id}`,
+        severity: 'critical',
+        message: `Critical vendor "${vendor.name}" has not been reconfirmed within ${reconfirmationHoursThreshold} hours of the wedding`,
+        linkType: 'vendor',
+        linkId: vendor.id,
+      });
+    }
+  }
+
+  for (const category of budgetCategories) {
+    const summary = computeCategorySummary(category, budgetItems, budgetVarianceWarningPercent);
+    if (summary.isOverThreshold) {
+      items.push({
+        id: `finance-budget-over-${category.id}`,
+        severity: 'warning',
+        message: `"${category.name}" is more than ${budgetVarianceWarningPercent}% over its planned budget`,
+        linkType: 'route',
+        linkId: '/vendors/budget',
+      });
+    }
+  }
+
+  const today = todayISO();
+  for (const refund of refunds) {
+    if ((refund.status === 'Expected' || refund.status === 'Partially Received') && refund.expectedDate && refund.expectedDate < today) {
+      const vendor = vendorById.get(refund.vendorId);
+      items.push({
+        id: `finance-refund-overdue-${refund.id}`,
+        severity: 'warning',
+        message: `${refund.refundType} refund overdue from "${vendor?.name ?? 'a vendor'}"`,
+        linkType: 'vendor',
+        linkId: refund.vendorId,
       });
     }
   }

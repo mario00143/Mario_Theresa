@@ -3,9 +3,11 @@ import { Trash2 } from 'lucide-react';
 import type { Hotel } from '@/types';
 import { Drawer } from '@/components/ui/Drawer';
 import { Button } from '@/components/ui/Button';
-import { Field, FieldHint, Input, Label, Textarea } from '@/components/ui/Field';
+import { Field, FieldHint, Input, Label, Select, Textarea } from '@/components/ui/Field';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useHotels } from '@/hooks/useHotels';
+import { useVendors } from '@/hooks/useVendors';
+import { useUI } from '@/context/UIContext';
 import { RoomTypesAndRoomsSection } from './RoomTypesAndRooms';
 
 interface HotelDetailDrawerProps {
@@ -15,6 +17,8 @@ interface HotelDetailDrawerProps {
 
 export function HotelDetailDrawer({ hotelId, onClose }: HotelDetailDrawerProps) {
   const { hotels, updateHotel, deleteHotel } = useHotels();
+  const { vendors } = useVendors();
+  const { openVendorDetail } = useUI();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const hotel = hotels.find((h: Hotel) => h.id === hotelId);
 
@@ -84,6 +88,23 @@ export function HotelDetailDrawer({ hotelId, onClose }: HotelDetailDrawerProps) 
                 <Input id="h-phone" defaultValue={hotel.phone ?? ''} key={`phone-${hotel.id}`} onBlur={(e) => updateHotel(hotel.id, { phone: e.target.value || undefined })} />
               </Field>
             </div>
+            <Field>
+              <Label htmlFor="h-linked-vendor">Linked commercial vendor</Label>
+              <Select id="h-linked-vendor" value={hotel.vendorId ?? ''} onChange={(e) => updateHotel(hotel.id, { vendorId: e.target.value || undefined })}>
+                <option value="">None</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </Select>
+              {hotel.vendorId && (
+                <button type="button" onClick={() => openVendorDetail(hotel.vendorId!)} className="mt-1.5 text-xs font-medium text-brand-700 hover:underline">
+                  View linked vendor record
+                </button>
+              )}
+              <FieldHint>Deliberate, optional link to a commercial Vendor record — never set automatically.</FieldHint>
+            </Field>
           </section>
 
           <section className="space-y-3 border-t border-line-soft pt-5">

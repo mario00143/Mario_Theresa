@@ -10,10 +10,14 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useVehicles } from '@/hooks/useVehicles';
 import { useTransportRoutes } from '@/hooks/useTransportRoutes';
 import { useTransportAssignments } from '@/hooks/useTransportAssignments';
+import { useVendors } from '@/hooks/useVendors';
+import { useUI } from '@/context/UIContext';
 import { seatsAssignedForRoute } from '@/utils/transportLogic';
 
 function VehicleRow({ vehicle, seatsAssigned }: { vehicle: Vehicle; seatsAssigned: number }) {
   const { updateVehicle, deleteVehicle } = useVehicles();
+  const { vendors } = useVendors();
+  const { openVendorDetail } = useUI();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const overCapacity = seatsAssigned > vehicle.passengerCapacity;
 
@@ -72,6 +76,26 @@ function VehicleRow({ vehicle, seatsAssigned }: { vehicle: Vehicle; seatsAssigne
       <Field>
         <Label htmlFor={`v-vendor-${vehicle.id}`}>Vendor</Label>
         <Input id={`v-vendor-${vehicle.id}`} defaultValue={vehicle.vendorName ?? ''} key={`v-vendor-${vehicle.id}`} onBlur={(e) => updateVehicle(vehicle.id, { vendorName: e.target.value || undefined })} />
+      </Field>
+      <Field>
+        <Label htmlFor={`v-linked-vendor-${vehicle.id}`}>Linked commercial vendor</Label>
+        <Select
+          id={`v-linked-vendor-${vehicle.id}`}
+          value={vehicle.vendorId ?? ''}
+          onChange={(e) => updateVehicle(vehicle.id, { vendorId: e.target.value || undefined })}
+        >
+          <option value="">None</option>
+          {vendors.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.name}
+            </option>
+          ))}
+        </Select>
+        {vehicle.vendorId && (
+          <button type="button" onClick={() => openVendorDetail(vehicle.vendorId!)} className="mt-1.5 text-xs font-medium text-brand-700 hover:underline">
+            View linked vendor record
+          </button>
+        )}
       </Field>
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-1.5 text-xs text-ink">

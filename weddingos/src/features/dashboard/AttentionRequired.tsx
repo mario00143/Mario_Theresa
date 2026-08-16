@@ -6,7 +6,7 @@ import type { AttentionItem } from '@/utils/dashboardStats';
 import { useUI } from '@/context/UIContext';
 
 export function AttentionRequired({ items }: { items: AttentionItem[] }) {
-  const { openTaskDetail, openDecisionDetail, openHouseholdDetail, openGuestDetail, openTravelDetail } = useUI();
+  const { openTaskDetail, openDecisionDetail, openHouseholdDetail, openGuestDetail, openTravelDetail, openVendorDetail } = useUI();
   const navigate = useNavigate();
 
   const handleClick = (item: AttentionItem) => {
@@ -25,6 +25,9 @@ export function AttentionRequired({ items }: { items: AttentionItem[] }) {
         break;
       case 'travel':
         openTravelDetail(item.linkId);
+        break;
+      case 'vendor':
+        openVendorDetail(item.linkId);
         break;
       case 'route':
         navigate(item.linkId);
