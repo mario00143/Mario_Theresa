@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
-import { TriangleAlert } from 'lucide-react';
+import { AlertTriangle, TriangleAlert } from 'lucide-react';
 import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/Card';
 import { StatTile } from '@/components/ui/StatTile';
+import { Badge } from '@/components/ui/Badge';
+import { useUI } from '@/context/UIContext';
 import { useVendors } from '@/hooks/useVendors';
 import { useVendorQuotes } from '@/hooks/useVendorQuotes';
 import { useContracts } from '@/hooks/useContracts';
@@ -13,6 +15,7 @@ import { useSettings } from '@/hooks/useSettings';
 import { computeBudgetOverview } from '@/utils/budgetLogic';
 import { computeFinanceSnapshot, computeVendorOverview } from '@/utils/financeStats';
 import { detectFinancialIssues } from '@/utils/financialDataQuality';
+import { isCriticalVendorNotReconfirmed } from '@/utils/vendorReadiness';
 import { weddingDateTimeISO } from '@/utils/date';
 import { formatCurrency } from '@/utils/currency';
 
@@ -26,6 +29,7 @@ export function VendorsOverviewView() {
   const { payments } = usePayments();
   const { refunds } = useRefunds();
   const { settings } = useSettings();
+  const { openVendorDetail } = useUI();
 
   const weddingDateTime = weddingDateTimeISO(settings);
   const budget = computeBudgetOverview(budgetCategories, budgetItems, settings.finance.budgetVarianceWarningPercent);
@@ -42,6 +46,9 @@ export function VendorsOverviewView() {
     reconfirmationHoursThreshold: 72,
   });
   const currency = settings.finance.currency;
+  const vendorsNeedingReconfirmation = vendors.filter((v) =>
+    isCriticalVendorNotReconfirmed(v, settings.finance.criticalVendorCategories, weddingDateTime, 72, new Date().toISOString()),
+  );
 
   return (
     <div className="space-y-5">
@@ -93,6 +100,27 @@ export function VendorsOverviewView() {
           />
         </CardBody>
       </Card>
+
+      {vendorsNeedingReconfirmation.length > 0 && (
+        <Card className="border-critical/40">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="size-4 text-critical" aria-hidden="true" />
+              Critical vendors need reconfirmation
+            </CardTitle>
+          </CardHeader>
+          <CardBody className="space-y-2">
+            <p className="text-xs text-ink-faint">Not reconfirmed within 72 hours of the wedding — tap a vendor to confirm.</p>
+            <div className="flex flex-wrap gap-2">
+              {vendorsNeedingReconfirmation.map((v) => (
+                <button key={v.id} type="button" onClick={() => openVendorDetail(v.id)}>
+                  <Badge tone="critical">{v.name}</Badge>
+                </button>
+              ))}
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       <Link to="/vendors/reports" className="block">
         <Card className={issues.length > 0 ? 'border-warning/40' : undefined}>

@@ -3,10 +3,27 @@ import { Trash2 } from 'lucide-react';
 import type { Vendor } from '@/types';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Badge } from '@/components/ui/Badge';
+import { Badge, type BadgeTone } from '@/components/ui/Badge';
 import { VendorStatusBadge } from '@/components/ui/StatusBadge';
 import { useUI } from '@/context/UIContext';
 import { useVendors } from '@/hooks/useVendors';
+import { useVendorContacts } from '@/hooks/useVendorContacts';
+import { useVendorQuotes } from '@/hooks/useVendorQuotes';
+import { useContracts } from '@/hooks/useContracts';
+import { usePaymentSchedules } from '@/hooks/usePaymentSchedules';
+import { usePayments } from '@/hooks/usePayments';
+import { useSettings } from '@/hooks/useSettings';
+import { computeVendorReadiness, isCriticalVendorNotReconfirmed, type ReadinessLevel } from '@/utils/vendorReadiness';
+import { weddingDateTimeISO } from '@/utils/date';
+
+const READINESS_TONE: Record<ReadinessLevel, BadgeTone> = {
+  Ready: 'success',
+  'Mostly Ready': 'info',
+  'At Risk': 'warning',
+  'Not Ready': 'critical',
+};
+
+const READINESS_STATUSES: Vendor['status'][] = ['Selected', 'Contracted', 'Confirmed', 'Completed'];
 
 interface VendorTableProps {
   vendors: Vendor[];
@@ -17,6 +34,12 @@ interface VendorTableProps {
 export function VendorTable({ vendors, emptyTitle = 'No vendors found', emptyDescription = 'Try adjusting your filters.' }: VendorTableProps) {
   const { openVendorDetail } = useUI();
   const { deleteVendor } = useVendors();
+  const { vendorContacts } = useVendorContacts();
+  const { vendorQuotes } = useVendorQuotes();
+  const { contracts } = useContracts();
+  const { paymentSchedules } = usePaymentSchedules();
+  const { payments } = usePayments();
+  const { settings } = useSettings();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   if (vendors.length === 0) {
@@ -24,6 +47,14 @@ export function VendorTable({ vendors, emptyTitle = 'No vendors found', emptyDes
   }
 
   const vendorToDelete = vendors.find((v) => v.id === confirmDeleteId);
+  const weddingDateTime = weddingDateTimeISO(settings);
+
+  const readinessFor = (vendor: Vendor) =>
+    READINESS_STATUSES.includes(vendor.status)
+      ? computeVendorReadiness(vendor, vendorContacts, vendorQuotes, contracts, paymentSchedules, payments).level
+      : null;
+  const needsReconfirmation = (vendor: Vendor) =>
+    isCriticalVendorNotReconfirmed(vendor, settings.finance.criticalVendorCategories, weddingDateTime, 72, new Date().toISOString());
 
   return (
     <>
@@ -37,11 +68,15 @@ export function VendorTable({ vendors, emptyTitle = 'No vendors found', emptyDes
               <th className="px-4 py-3">City</th>
               <th className="px-4 py-3">Booking owner</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Readiness</th>
               <th className="px-4 py-3" aria-label="Actions" />
             </tr>
           </thead>
           <tbody>
-            {vendors.map((vendor) => (
+            {vendors.map((vendor) => {
+              const readiness = readinessFor(vendor);
+              const reconfirm = needsReconfirmation(vendor);
+              return (
               <tr
                 key={vendor.id}
                 onClick={() => openVendorDetail(vendor.id)}
@@ -59,6 +94,13 @@ export function VendorTable({ vendors, emptyTitle = 'No vendors found', emptyDes
                 <td className="px-4 py-3 whitespace-nowrap">
                   <VendorStatusBadge status={vendor.status} />
                 </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {readiness && <Badge tone={READINESS_TONE[readiness]}>{readiness}</Badge>}
+                    {reconfirm && <Badge tone="critical">Reconfirm</Badge>}
+                    {!readiness && !reconfirm && <span className="text-xs text-ink-faint">—</span>}
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   <button
                     type="button"
@@ -73,13 +115,17 @@ export function VendorTable({ vendors, emptyTitle = 'No vendors found', emptyDes
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       <ul className="sm:hidden space-y-2.5">
-        {vendors.map((vendor) => (
+        {vendors.map((vendor) => {
+          const readiness = readinessFor(vendor);
+          const reconfirm = needsReconfirmation(vendor);
+          return (
           <li key={vendor.id}>
             <div
               role="button"
@@ -99,10 +145,13 @@ export function VendorTable({ vendors, emptyTitle = 'No vendors found', emptyDes
               </p>
               <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                 <VendorStatusBadge status={vendor.status} />
+                {readiness && <Badge tone={READINESS_TONE[readiness]}>{readiness}</Badge>}
+                {reconfirm && <Badge tone="critical">Reconfirm</Badge>}
               </div>
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
 
       <ConfirmDialog
