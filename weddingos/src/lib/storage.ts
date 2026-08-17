@@ -102,4 +102,6 @@ export const STORAGE_KEYS = {
   guestOperationalStatuses: 'guestOperationalStatuses',
   manifestFreezeStates: 'manifestFreezeStates',
   seeded: 'seeded',
+  errorLog: 'errorLog',
+  launchGate: 'launchGate',
 } as const;

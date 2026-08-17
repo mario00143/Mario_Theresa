@@ -1,19 +1,15 @@
+import { lazy, Suspense } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { UIProvider } from '@/context/UIContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { WorkspaceProvider, useWorkspace } from '@/context/WorkspaceContext';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { TasksPage } from '@/pages/TasksPage';
 import { GuestsPage } from '@/pages/GuestsPage';
-import { LogisticsPage } from '@/pages/LogisticsPage';
-import { VendorsPage } from '@/pages/VendorsPage';
-import { WeddingPrepPage } from '@/pages/WeddingPrepPage';
-import { WeddingDayPage } from '@/pages/WeddingDayPage';
 import { CalendarPage } from '@/pages/CalendarPage';
 import { DecisionsPage } from '@/pages/DecisionsPage';
-import { SettingsPage } from '@/pages/SettingsPage';
-import { DocumentsPage } from '@/pages/DocumentsPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { SignupPage } from '@/pages/auth/SignupPage';
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
@@ -21,6 +17,29 @@ import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage';
 import { JoinPage } from '@/pages/auth/JoinPage';
 import { CreateWorkspacePage } from '@/pages/auth/CreateWorkspacePage';
 import { SelectWorkspacePage } from '@/pages/auth/SelectWorkspacePage';
+
+/**
+ * Section 42's route-level code splitting: these five modules (plus
+ * Documents/Settings) are the heaviest in the bundle-size report (each
+ * pulls in its own large feature tree — forms, CSV builders, manifest
+ * logic, etc.) and are not needed on first paint, so they're split into
+ * separate chunks fetched on first navigation rather than bundled into
+ * the initial JS the login/dashboard screen has to download.
+ */
+const LogisticsPage = lazy(() => import('@/pages/LogisticsPage').then((m) => ({ default: m.LogisticsPage })));
+const VendorsPage = lazy(() => import('@/pages/VendorsPage').then((m) => ({ default: m.VendorsPage })));
+const WeddingPrepPage = lazy(() => import('@/pages/WeddingPrepPage').then((m) => ({ default: m.WeddingPrepPage })));
+const WeddingDayPage = lazy(() => import('@/pages/WeddingDayPage').then((m) => ({ default: m.WeddingDayPage })));
+const DocumentsPage = lazy(() => import('@/pages/DocumentsPage').then((m) => ({ default: m.DocumentsPage })));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <p className="text-ink-faint text-sm">Loading…</p>
+    </div>
+  );
+}
 
 function SplashScreen() {
   return (
@@ -38,14 +57,56 @@ function WeddingOSApp() {
         <Route index element={<DashboardPage />} />
         <Route path="tasks/*" element={<TasksPage />} />
         <Route path="guests/*" element={<GuestsPage />} />
-        <Route path="logistics/*" element={<LogisticsPage />} />
-        <Route path="vendors/*" element={<VendorsPage />} />
-        <Route path="wedding-prep/*" element={<WeddingPrepPage />} />
-        <Route path="wedding-day/*" element={<WeddingDayPage />} />
+        <Route
+          path="logistics/*"
+          element={
+            <Suspense fallback={<RouteFallback />}>
+              <LogisticsPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="vendors/*"
+          element={
+            <Suspense fallback={<RouteFallback />}>
+              <VendorsPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="wedding-prep/*"
+          element={
+            <Suspense fallback={<RouteFallback />}>
+              <WeddingPrepPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="wedding-day/*"
+          element={
+            <Suspense fallback={<RouteFallback />}>
+              <WeddingDayPage />
+            </Suspense>
+          }
+        />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="decisions" element={<DecisionsPage />} />
-        <Route path="documents" element={<DocumentsPage />} />
-        <Route path="settings/*" element={<SettingsPage />} />
+        <Route
+          path="documents"
+          element={
+            <Suspense fallback={<RouteFallback />}>
+              <DocumentsPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="settings/*"
+          element={
+            <Suspense fallback={<RouteFallback />}>
+              <SettingsPage />
+            </Suspense>
+          }
+        />
       </Route>
     </Routes>
   );
@@ -104,12 +165,14 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <UIProvider>
-      <AuthProvider>
-        <HashRouter>
-          <AppRoutes />
-        </HashRouter>
-      </AuthProvider>
-    </UIProvider>
+    <ErrorBoundary>
+      <UIProvider>
+        <AuthProvider>
+          <HashRouter>
+            <AppRoutes />
+          </HashRouter>
+        </AuthProvider>
+      </UIProvider>
+    </ErrorBoundary>
   );
 }

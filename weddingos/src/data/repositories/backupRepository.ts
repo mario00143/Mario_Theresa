@@ -133,6 +133,7 @@ import {
   DEFAULT_WEDDING_PREP_SECTION_WEIGHTS,
 } from '@/types';
 import { DEFAULT_BUDGET_VARIANCE_WARNING_PERCENT, DEFAULT_CRITICAL_VENDOR_CATEGORIES, DEFAULT_CURRENCY, DEFAULT_LARGE_CASH_WARNING_THRESHOLD } from '@/lib/constants';
+import { csvEscape } from '@/utils/csv';
 import {
   attireItemsStore,
   attireProfilesStore,
@@ -997,14 +998,6 @@ export function importBackup(backup: WeddingOSBackup): void {
   finalReadinessReviewsStore.set(backup.finalReadinessReviews ?? []);
   guestOperationalStatusesStore.set(backup.guestOperationalStatuses ?? []);
   manifestFreezeStatesStore.set(backup.manifestFreezeStates ?? []);
-}
-
-function csvEscape(value: string | number | undefined | null): string {
-  const str = value === undefined || value === null ? '' : String(value);
-  if (/[",\n]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
 }
 
 export function tasksToCSV(tasks: Task[]): string {

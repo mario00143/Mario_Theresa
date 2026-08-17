@@ -164,6 +164,11 @@ export function isAdminOrCouple(role: WorkspaceRole | undefined): boolean {
   return role === 'Admin' || role === 'Couple';
 }
 
+/** Phase 8's strictly Admin-only surfaces (System Diagnostics, Demo Data Cleanup, Production Readiness, Launch Gate, Post-Wedding Data Cleanup) — narrower than isAdminOrCouple. */
+export function isAdmin(role: WorkspaceRole | undefined): boolean {
+  return role === 'Admin';
+}
+
 /**
  * Flows section 30 explicitly calls out as never optimistic — writes must
  * be confirmed by the backend before the UI reflects them as applied.

@@ -1,5 +1,5 @@
 import type { Decision } from '@/types';
-import { generateId } from '@/lib/id';
+import { generateSeedId } from '@/lib/id';
 
 interface DecisionSeed {
   title: string;
@@ -153,7 +153,7 @@ export function buildSeedDecisions(taskIdByKey: Map<string, string>): Decision[]
   return seeds.map((seed) => {
     const createdAt = daysAgoISO(seed.createdDaysAgo ?? 20);
     return {
-      id: generateId('decision'),
+      id: generateSeedId('decision', seed.title),
       title: seed.title,
       description: seed.description,
       category: seed.category,

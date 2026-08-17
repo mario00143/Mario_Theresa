@@ -15,14 +15,7 @@ import {
   buildRefundReport,
   buildVendorReadinessReport,
 } from '@/utils/financeReports';
-
-function csvEscape(value: string | number | undefined | null): string {
-  const str = value === undefined || value === null ? '' : String(value);
-  if (/[",\n]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+import { csvEscape } from '@/utils/csv';
 
 export function vendorsToCSV(vendors: Vendor[], contacts: VendorContact[]): string {
   const contactById = new Map(contacts.map((c) => [c.id, c]));

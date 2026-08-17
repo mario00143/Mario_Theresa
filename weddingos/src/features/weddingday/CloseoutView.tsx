@@ -14,6 +14,9 @@ import { closeoutExceptions, computeCloseoutProgress, isCloseoutItemOverdue } fr
 import { formatRunSheetClockTime } from '@/utils/runSheetLogic';
 import { closeoutChecklistCsvFilename, closeoutChecklistToCSV } from '@/data/repositories/weddingDayCsv';
 import { downloadTextFile } from '@/utils/download';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useAuth } from '@/context/AuthContext';
+import { enqueueOfflineMutation } from '@/data/offline/offlineMutationQueue';
 
 const STATUS_TONE: Record<CloseoutStatus, BadgeTone> = {
   Pending: 'neutral',
@@ -24,11 +27,21 @@ const STATUS_TONE: Record<CloseoutStatus, BadgeTone> = {
 
 function CloseoutCard({ itemId, referenceTime }: { itemId: string; referenceTime: string }) {
   const { closeoutItems, updateCloseoutItem, deleteCloseoutItem, setCloseoutItemStatus } = useCloseoutItems();
+  const isOnline = useOnlineStatus();
+  const { supabaseEnabled } = useAuth();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const item = closeoutItems.find((i) => i.id === itemId);
   if (!item) return null;
 
   const overdue = isCloseoutItemOverdue(item, referenceTime);
+
+  function handleStatusChange(status: CloseoutStatus) {
+    if (supabaseEnabled && !isOnline) {
+      void enqueueOfflineMutation({ entityType: 'closeoutItem', action: 'updateStatus', payload: { status, completedAt: status === 'Complete' ? new Date().toISOString() : undefined } }, itemId);
+    } else {
+      setCloseoutItemStatus(itemId, status, item!.verificationNote);
+    }
+  }
 
   return (
     <div className="rounded-lg border border-line-soft p-3 space-y-2.5">
@@ -65,7 +78,7 @@ function CloseoutCard({ itemId, referenceTime }: { itemId: string; referenceTime
         </Field>
         <Field>
           <Label htmlFor={`co-status-${item.id}`}>Status</Label>
-          <Select id={`co-status-${item.id}`} value={item.status} onChange={(e) => setCloseoutItemStatus(item.id, e.target.value as CloseoutStatus, item.verificationNote)}>
+          <Select id={`co-status-${item.id}`} value={item.status} onChange={(e) => handleStatusChange(e.target.value as CloseoutStatus)}>
             {CLOSEOUT_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}

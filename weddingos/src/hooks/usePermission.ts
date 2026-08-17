@@ -5,6 +5,7 @@ import {
   canRead,
   canWrite,
   getModulePermission,
+  isAdmin,
   isAdminOrCouple,
   readOnlyReason,
   type PermissionModule,
@@ -45,6 +46,11 @@ export function usePermission() {
     isAdminOrCouple(): boolean {
       if (isLocalMode) return true;
       return isAdminOrCouple(role);
+    },
+    /** Strictly Admin — Local Mode has no roles, so its single implicit user is treated as Admin. */
+    isAdmin(): boolean {
+      if (isLocalMode) return true;
+      return isAdmin(role);
     },
   };
 }

@@ -4,11 +4,13 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { PriorityBadge } from '@/components/ui/PriorityBadge';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { Button } from '@/components/ui/Button';
 import { useUI } from '@/context/UIContext';
 import { useTasks } from '@/hooks/useTasks';
 import { formatDisplayDate } from '@/utils/date';
 import { isTaskOverdue } from '@/utils/taskLogic';
 import { TaskRowActions } from './TaskRowActions';
+import { usePagedList } from '@/hooks/usePagedList';
 
 interface TaskListViewProps {
   tasks: Task[];
@@ -20,6 +22,7 @@ export function TaskListView({ tasks, emptyTitle = 'No tasks found', emptyDescri
   const { openTaskDetail } = useUI();
   const { duplicateTask, deleteTask } = useTasks();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const { visible: pagedTasks, hasMore, loadMore, remaining } = usePagedList(tasks);
 
   if (tasks.length === 0) {
     return <EmptyState title={emptyTitle} description={emptyDescription} />;
@@ -45,7 +48,7 @@ export function TaskListView({ tasks, emptyTitle = 'No tasks found', emptyDescri
             </tr>
           </thead>
           <tbody>
-            {tasks.map((task) => (
+            {pagedTasks.map((task) => (
               <tr
                 key={task.id}
                 onClick={() => openTaskDetail(task.id)}
@@ -77,7 +80,7 @@ export function TaskListView({ tasks, emptyTitle = 'No tasks found', emptyDescri
 
       {/* Mobile cards */}
       <ul className="sm:hidden space-y-2.5">
-        {tasks.map((task) => (
+        {pagedTasks.map((task) => (
           <li key={task.id}>
             <div
               role="button"
@@ -104,6 +107,14 @@ export function TaskListView({ tasks, emptyTitle = 'No tasks found', emptyDescri
           </li>
         ))}
       </ul>
+
+      {hasMore && (
+        <div className="flex justify-center py-3">
+          <Button variant="secondary" size="sm" onClick={loadMore}>
+            Load more ({remaining} remaining)
+          </Button>
+        </div>
+      )}
 
       <ConfirmDialog
         open={confirmDeleteId !== null}

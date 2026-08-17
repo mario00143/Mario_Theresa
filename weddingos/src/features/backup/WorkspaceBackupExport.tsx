@@ -4,6 +4,7 @@ import { useWorkspace } from '@/context/WorkspaceContext';
 import { usePermission } from '@/hooks/usePermission';
 import { exportWorkspaceBackup } from '@/data/supabase/backupV7';
 import { downloadTextFile } from '@/utils/download';
+import { recordBackupExported } from '@/lib/backupTracking';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
@@ -23,6 +24,7 @@ export function WorkspaceBackupExport() {
       const backup = await exportWorkspaceBackup(currentWorkspace!.id, role);
       const filename = `weddingos-backup-v${BACKUP_VERSION}-${currentWorkspace!.slug}-${new Date().toISOString().slice(0, 10)}.json`;
       downloadTextFile(filename, JSON.stringify(backup, null, 2), 'application/json');
+      recordBackupExported();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Export failed.');
     } finally {

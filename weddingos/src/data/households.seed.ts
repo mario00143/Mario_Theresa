@@ -18,7 +18,7 @@ import type {
   RsvpResponse,
   RsvpStatus,
 } from '@/types';
-import { generateId } from '@/lib/id';
+import { generateSeedId } from '@/lib/id';
 
 const NOW = new Date('2026-08-15T09:00:00.000Z');
 function daysAgoISO(days: number): string {
@@ -880,7 +880,7 @@ const households: HouseholdSeedDef[] = [
 // One deliberately orphaned guest (no matching household) to exercise the
 // "Guest with no household" data-quality check.
 const ORPHAN_GUEST: Guest = {
-  id: generateId('guest'),
+  id: generateSeedId('guest', 'Unlinked Guest Record'),
   householdId: 'household_does_not_exist',
   fullName: 'Unlinked Guest Record',
   ageCategory: 'Adult',
@@ -928,7 +928,7 @@ export function buildSeedHouseholdsAndGuests(): SeedHouseholdsResult {
   const builtGuests: Guest[] = [];
 
   for (const def of households) {
-    const householdId = generateId('household');
+    const householdId = generateSeedId('household', def.householdName);
     const createdAt = daysAgoISO(def.createdDaysAgo ?? 60);
     const updatedAt = daysAgoISO(
       def.lastFollowUpAt ?? def.deliveredAt ?? def.sentAt ?? def.preparedAt ?? def.createdDaysAgo ?? 60,
@@ -970,7 +970,7 @@ export function buildSeedHouseholdsAndGuests(): SeedHouseholdsResult {
     };
     builtHouseholds.push(household);
 
-    for (const member of def.members) {
+    for (const [memberIndex, member] of def.members.entries()) {
       const invitedEvents = member.invitedEvents ?? def.invitedEvents;
       const rsvpResponses: RsvpResponse[] = [];
       for (const event of invitedEvents) {
@@ -979,7 +979,7 @@ export function buildSeedHouseholdsAndGuests(): SeedHouseholdsResult {
       }
 
       const guest: Guest = {
-        id: generateId('guest'),
+        id: generateSeedId('guest', `${def.householdName}:${memberIndex}:${member.fullName}`),
         householdId,
         fullName: member.fullName,
         preferredName: member.preferredName,

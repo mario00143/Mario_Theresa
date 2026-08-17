@@ -26,6 +26,7 @@ import { criticalOpenLiveIssues } from '@/utils/liveIssueLogic';
 import { primaryEmergencyContacts } from '@/utils/emergencyLogic';
 import { formatRunSheetClockTime, formatRunSheetRelativeLabel, resolveRunSheetPlannedDateTimeISO, sortRunSheetItems } from '@/utils/runSheetLogic';
 import { buildChurchShuttleManifest, buildReceptionShuttleManifest, buildVendorContactManifest, buildVipElderlyManifest } from '@/utils/manifestLogic';
+import { DigitalOfflinePackStatus } from './DigitalOfflinePackStatus';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -70,6 +71,9 @@ export function OfflinePackView() {
 
   return (
     <div className="space-y-4">
+      <div className="no-print">
+        <DigitalOfflinePackStatus />
+      </div>
       <div className="no-print flex justify-end">
         <Button variant="primary" icon={<Printer className="size-4" aria-hidden="true" />} onClick={() => window.print()}>
           Print offline pack

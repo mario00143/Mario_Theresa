@@ -13,6 +13,11 @@ import { MembersSection } from '@/features/settings/MembersSection';
 import { MigrationWizard } from '@/features/migration/MigrationWizard';
 import { AuditLogView } from '@/features/audit/AuditLogView';
 import { WorkspaceBackupExport } from '@/features/backup/WorkspaceBackupExport';
+import { DiagnosticsSection } from '@/features/settings/DiagnosticsSection';
+import { AboutSection } from '@/features/settings/AboutSection';
+import { DataCleanupSection } from '@/features/settings/DataCleanupSection';
+import { PostWeddingCleanupSection } from '@/features/settings/PostWeddingCleanupSection';
+import { ProductionReadinessSection } from '@/features/settings/ProductionReadinessSection';
 
 const LOCAL_TABS = [
   { to: '/settings', label: 'Event Details', end: true },
@@ -21,6 +26,10 @@ const LOCAL_TABS = [
   { to: '/settings/wedding-prep', label: 'Wedding Prep', end: false },
   { to: '/settings/wedding-day', label: 'Wedding Day', end: false },
   { to: '/settings/data', label: 'Data Management', end: false },
+  { to: '/settings/data-cleanup', label: 'Demo Data Cleanup', end: false },
+  { to: '/settings/post-wedding-cleanup', label: 'Post-Wedding Cleanup', end: false },
+  { to: '/settings/readiness', label: 'Production Readiness', end: false },
+  { to: '/settings/about', label: 'About', end: false },
 ];
 
 const SUPABASE_TABS = [
@@ -31,6 +40,7 @@ const SUPABASE_TABS = [
   { to: '/settings/migration', label: 'Migrate Local Data', end: false },
   { to: '/settings/backup', label: 'Backup', end: false },
   { to: '/settings/audit-log', label: 'Audit Log', end: false },
+  { to: '/settings/diagnostics', label: 'Diagnostics', end: false },
 ];
 
 export function SettingsPage() {
@@ -68,6 +78,10 @@ export function SettingsPage() {
         <Route path="wedding-prep" element={<WeddingPrepSettingsForm />} />
         <Route path="wedding-day" element={<WeddingDaySettingsForm />} />
         <Route path="data" element={<DataManagement />} />
+        <Route path="data-cleanup" element={<DataCleanupSection />} />
+        <Route path="post-wedding-cleanup" element={<PostWeddingCleanupSection />} />
+        <Route path="readiness" element={<ProductionReadinessSection />} />
+        <Route path="about" element={<AboutSection />} />
         {supabaseEnabled && (
           <>
             <Route path="account" element={<MyAccountSection />} />
@@ -76,6 +90,7 @@ export function SettingsPage() {
             <Route path="migration" element={<MigrationWizard />} />
             <Route path="backup" element={<WorkspaceBackupExport />} />
             <Route path="audit-log" element={<AuditLogView />} />
+            <Route path="diagnostics" element={<DiagnosticsSection />} />
           </>
         )}
       </Routes>

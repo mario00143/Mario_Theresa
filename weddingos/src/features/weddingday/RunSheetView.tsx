@@ -24,6 +24,9 @@ import { computeRunSheetTimingStatus, formatRunSheetClockTime, formatRunSheetRel
 import { runSheetCsvFilename, runSheetToCSV } from '@/data/repositories/weddingDayCsv';
 import { downloadTextFile } from '@/utils/download';
 import type { DelayConflictContext } from '@/utils/delayPropagation';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useAuth } from '@/context/AuthContext';
+import { enqueueOfflineMutation } from '@/data/offline/offlineMutationQueue';
 
 const STATUS_TONE: Record<RunSheetStatus, BadgeTone> = {
   Planned: 'neutral',
@@ -44,6 +47,24 @@ function timingTone(label: string): BadgeTone {
 export function RunSheetView() {
   const { settings } = useSettings();
   const { runSheetItems, addRunSheetItem, updateRunSheetItem, deleteRunSheetItem, startRunSheetItem, completeRunSheetItem, delayRunSheetItem, applyDelayShift } = useRunSheet();
+  const isOnline = useOnlineStatus();
+  const { supabaseEnabled } = useAuth();
+
+  function handleStart(id: string, referenceDateTimeISO: string) {
+    if (supabaseEnabled && !isOnline) {
+      void enqueueOfflineMutation({ entityType: 'runSheetItem', action: 'updateStatus', payload: { status: 'In Progress', actualStartTime: referenceDateTimeISO } }, id);
+    } else {
+      startRunSheetItem(id, referenceDateTimeISO);
+    }
+  }
+
+  function handleComplete(id: string, referenceDateTimeISO: string) {
+    if (supabaseEnabled && !isOnline) {
+      void enqueueOfflineMutation({ entityType: 'runSheetItem', action: 'updateStatus', payload: { status: 'Complete', actualEndTime: referenceDateTimeISO } }, id);
+    } else {
+      completeRunSheetItem(id, referenceDateTimeISO);
+    }
+  }
   const { ceremonyParticipants } = useCeremonyParticipants();
   const { vendors } = useVendors();
   const { ceremonyItems } = useCeremonyItems();
@@ -170,12 +191,12 @@ export function RunSheetView() {
                       <td className="px-3 py-2 align-top">
                         <div className="flex flex-wrap gap-1.5">
                           {(item.status === 'Planned' || item.status === 'Ready') && (
-                            <Button variant="ghost" size="sm" onClick={() => startRunSheetItem(item.id, referenceISO)}>
+                            <Button variant="ghost" size="sm" onClick={() => handleStart(item.id, referenceISO)}>
                               Start
                             </Button>
                           )}
                           {(item.status === 'In Progress' || item.status === 'Delayed') && (
-                            <Button variant="ghost" size="sm" onClick={() => completeRunSheetItem(item.id, referenceISO)}>
+                            <Button variant="ghost" size="sm" onClick={() => handleComplete(item.id, referenceISO)}>
                               Complete
                             </Button>
                           )}

@@ -17,6 +17,9 @@ import { useTransportRoutes } from '@/hooks/useTransportRoutes';
 import { isLiveIssueEscalationDue, isLiveIssueOpen, liveIssueOpenMinutes } from '@/utils/liveIssueLogic';
 import { liveIssuesCsvFilename, liveIssuesToCSV } from '@/data/repositories/weddingDayCsv';
 import { downloadTextFile } from '@/utils/download';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useAuth } from '@/context/AuthContext';
+import { enqueueOfflineMutation } from '@/data/offline/offlineMutationQueue';
 
 const SEVERITY_TONE: Record<LiveIssueSeverity, BadgeTone> = {
   Low: 'low',
@@ -29,6 +32,8 @@ type ViewFilter = 'Open' | 'Critical' | 'High' | 'All' | 'Resolved';
 
 function IssueCard({ issueId }: { issueId: string }) {
   const { settings } = useSettings();
+  const isOnline = useOnlineStatus();
+  const { supabaseEnabled } = useAuth();
   const { liveIssues, updateLiveIssue, deleteLiveIssue, escalateLiveIssue, assignLiveIssueOwner, addLiveIssueMitigation, resolveLiveIssue, reopenLiveIssue } = useLiveIssues();
   const { runSheetItems } = useRunSheet();
   const { vendors } = useVendors();
@@ -189,7 +194,11 @@ function IssueCard({ issueId }: { issueId: string }) {
               size="sm"
               disabled={!mitigationDraft.trim()}
               onClick={() => {
-                addLiveIssueMitigation(issue.id, mitigationDraft.trim());
+                if (supabaseEnabled && !isOnline) {
+                  void enqueueOfflineMutation({ entityType: 'liveIssue', action: 'updateStatusOrMitigation', payload: { mitigation: mitigationDraft.trim() } }, issue.id);
+                } else {
+                  addLiveIssueMitigation(issue.id, mitigationDraft.trim());
+                }
                 setMitigationDraft('');
               }}
             >
@@ -242,6 +251,8 @@ function IssueCard({ issueId }: { issueId: string }) {
 
 export function IssuesView() {
   const { liveIssues, addLiveIssue } = useLiveIssues();
+  const isOnline = useOnlineStatus();
+  const { supabaseEnabled } = useAuth();
   const [view, setView] = useState<ViewFilter>('Open');
   const [newTitle, setNewTitle] = useState('');
 
@@ -262,6 +273,15 @@ export function IssuesView() {
 
   function handleAdd() {
     if (!newTitle.trim()) return;
+    if (supabaseEnabled && !isOnline) {
+      void enqueueOfflineMutation({
+        entityType: 'liveIssue',
+        action: 'create',
+        payload: { title: newTitle.trim(), category: 'Other', severity: 'Medium' },
+      });
+      setNewTitle('');
+      return;
+    }
     addLiveIssue({
       title: newTitle.trim(),
       category: 'Other',

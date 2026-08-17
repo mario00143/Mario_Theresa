@@ -2,7 +2,69 @@
 
 WeddingOS is a private, mobile-first wedding planning application built to coordinate a Kerala-style Christian Indian wedding across two events: an engagement in Goa and a wedding in Hyderabad, 19 days apart. It replaces scattered spreadsheets and chat threads with one operational tool covering tasks, decisions, calendar, guests/RSVP, travel/logistics, vendors/budget, wedding-preparation tracking, and a live wedding-day command center.
 
-This README's feature-by-feature narrative below was written during Phase 2 and documents Phases 1-2 in detail; Phases 3-6 (Logistics, Vendors & Budget, Wedding Prep, Wedding Day Command Center) shipped on top of it without a full rewrite of this file — see each phase's commit history for their scope. **Phase 7 (this phase) is documented in its own section immediately below**, since it changes the persistence model itself.
+This README's feature-by-feature narrative below was written during Phase 2 and documents Phases 1-2 in detail; Phases 3-6 (Logistics, Vendors & Budget, Wedding Prep, Wedding Day Command Center) shipped on top of it without a full rewrite of this file — see each phase's commit history for their scope. Phase 7 added Supabase Production Mode, documented in its own section below. **Phase 8 (this phase) is the final engineering phase before real-world use** — PWA/offline resilience, deployment, and launch readiness — documented in its own section immediately below.
+
+## Phase 8 — PWA, Offline Resilience, Deployment & Launch Readiness
+
+WeddingOS is now installable as a real app and works through real-world
+Wedding Day conditions: patchy signal, a lost phone, a stale browser tab.
+
+- **Installable PWA** — a Web App Manifest and a Workbox service worker
+  (`vite-plugin-pwa`) precache the app shell only; Supabase API
+  responses, auth tokens, and signed document URLs are never cached by
+  the service worker. An "Install WeddingOS" prompt appears where the
+  browser supports it, with manual instructions on iOS Safari
+  (`src/hooks/useInstallPrompt.ts`, `src/components/layout/InstallPrompt.tsx`).
+- **Offline Pack** — a device-local, explicitly-refreshed IndexedDB
+  snapshot of Wedding-Day-critical read-only data (run sheet, emergency/
+  vendor contacts, duties, ceremony items, manifests, rooming list,
+  VIP/elderly list, open critical issues, closeout, venue details) with
+  a visible freshness/staleness indicator
+  (`src/data/offline/offlineSnapshot.ts`, Wedding Day → Offline Pack).
+- **Safe offline mutation queue** — exactly five allow-listed actions
+  (create/update Live Issue, update Run Sheet status, record a Ceremony
+  Item movement, update Closeout status) can be made while offline;
+  everything else is disabled with an explanation rather than silently
+  failing. Queued changes show "Pending Sync," replay automatically on
+  reconnect, and never silently overwrite a change made elsewhere —
+  conflicts are surfaced with a Keep Server / Apply Mine choice
+  (`src/data/offline/offlineMutationQueue.ts`).
+- **Diagnostics, versioning, and System Check** — Settings → Diagnostics
+  (Admin-only) shows app version/build/connectivity/sync status with
+  zero secrets ever rendered, plus a one-click Run System Check and a
+  local, privacy-preserving error log (no external analytics of any
+  kind). Settings → About shows version info to everyone.
+- **Production Readiness & Launch Gate** — Settings → Production
+  Readiness (Admin-only) checks Infrastructure/Security/Authentication/
+  Database/Backup/PWA/Offline Pack/Users & Roles/Data Quality/Wedding
+  Day Readiness as Pass/Warning/Fail with plain-language remediation,
+  never auto-claims "ready," and lets an Admin mark "Production Launch
+  Reviewed" (informational only — nothing is technically locked).
+- **Demo Data Cleanup Assistant** — identifies original seed/demo
+  content by exact, deterministic id match only (never by guessing from
+  a similar name) so real user-created records are never at risk;
+  Post-Wedding Cleanup separately clears contact/logistics data you no
+  longer need to retain post-event, never financial or audit records.
+- **Security hardening** — CSV formula-injection protection unified
+  across every export builder, file upload MIME+extension double
+  validation, a tested Content-Security-Policy and security headers
+  (`vercel.json`), and an open-redirect/auth-redirect code review.
+- **Performance** — route-level code splitting for the five heaviest
+  modules, pagination for large Guests/Tasks lists, and 7 new benchmark
+  tests proving 1,000+ record operations stay fast.
+- **Deployment-ready** — `vercel.json` + `docs/DEPLOYMENT.md` walk
+  through a complete, non-developer, ₹0-cost deploy (GitHub → Supabase
+  free tier → Vercel Hobby).
+
+New documentation: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md),
+[`docs/PRODUCTION_SMOKE_TEST.md`](docs/PRODUCTION_SMOKE_TEST.md),
+[`docs/LAUNCH_CHECKLIST.md`](docs/LAUNCH_CHECKLIST.md),
+[`docs/ADMIN_GUIDE.md`](docs/ADMIN_GUIDE.md),
+[`docs/FAMILY_USER_GUIDE.md`](docs/FAMILY_USER_GUIDE.md),
+[`docs/WEDDING_DAY_OPERATOR.md`](docs/WEDDING_DAY_OPERATOR.md),
+[`docs/BACKUP_RECOVERY.md`](docs/BACKUP_RECOVERY.md),
+[`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md), and an
+updated [`docs/SECURITY_CHECKLIST.md`](docs/SECURITY_CHECKLIST.md).
 
 ## Phase 7 — Supabase Production Mode
 

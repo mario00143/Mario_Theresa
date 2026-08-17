@@ -95,6 +95,15 @@ export interface WeddingDaySettings {
   weddingDayModeEnabled: boolean;
   /** Manual simulation-time override (section 9) so the Command Center can be tested before the real wedding day. */
   simulationDateTimeISO?: string;
+  /** Section 85's Launch Gate — informational only, never blocks any action. Set once an Admin marks the Production Readiness screen reviewed. */
+  productionLaunchReview?: ProductionLaunchReview;
+}
+
+export interface ProductionLaunchReview {
+  reviewedAt: string;
+  reviewedBy: string;
+  appVersion: string;
+  unresolvedWarnings: string[];
 }
 
 export const DEFAULT_WEDDING_DAY_SETTINGS: WeddingDaySettings = {

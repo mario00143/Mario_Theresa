@@ -1,5 +1,5 @@
 import type { EventScope, Priority, Task, TaskStatus, Workstream, Subtask } from '@/types';
-import { generateId } from '@/lib/id';
+import { generateId, generateSeedId } from '@/lib/id';
 
 interface TaskSeed {
   key: string;
@@ -2003,7 +2003,7 @@ export interface SeedTasksResult {
 export function buildSeedTasks(): SeedTasksResult {
   const idByKey = new Map<string, string>();
   for (const seed of seeds) {
-    idByKey.set(seed.key, generateId('task'));
+    idByKey.set(seed.key, generateSeedId('task', seed.key));
   }
 
   const tasks = seeds.map((seed) => {

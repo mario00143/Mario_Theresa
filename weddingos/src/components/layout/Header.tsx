@@ -19,7 +19,7 @@ export function Header() {
   const weddingCountdown = getCountdown(settings.wedding.date);
 
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-surface/95 backdrop-blur px-4 py-3 lg:px-6">
+    <header className="no-print sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-surface/95 backdrop-blur px-4 py-3 lg:px-6">
       <div className="flex items-center gap-2 lg:hidden">
         <div className="flex size-8 items-center justify-center rounded-lg bg-brand-700 text-white">
           <Heart className="size-4" aria-hidden="true" />

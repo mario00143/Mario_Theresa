@@ -4,6 +4,10 @@ import { BottomNav } from './BottomNav';
 import { Header } from './Header';
 import { GlobalSearchModal } from './GlobalSearchModal';
 import { QuickAddModal } from './QuickAddModal';
+import { OfflineBanner } from './OfflineBanner';
+import { OfflineSyncManager } from './OfflineSyncManager';
+import { PwaUpdatePrompt } from './PwaUpdatePrompt';
+import { InstallPrompt } from './InstallPrompt';
 import { TaskDetailDrawer } from '@/features/tasks/TaskDetailDrawer';
 import { DecisionDetailDrawer } from '@/features/decisions/DecisionDetailDrawer';
 import { HouseholdDetailDrawer } from '@/features/guests/HouseholdDetailDrawer';
@@ -17,6 +21,7 @@ export function AppShell() {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
+        <OfflineBanner />
         <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
           <div className="mx-auto max-w-6xl px-4 py-5 lg:px-6 lg:py-6">
             <Outlet />
@@ -27,6 +32,9 @@ export function AppShell() {
 
       <GlobalSearchModal />
       <QuickAddModal />
+      <OfflineSyncManager />
+      <PwaUpdatePrompt />
+      <InstallPrompt />
       <TaskDetailDrawer />
       <DecisionDetailDrawer />
       <HouseholdDetailDrawer />

@@ -127,6 +127,7 @@ import {
 } from '@/utils/weddingPrepReadiness';
 import { weddingDateTimeISO } from '@/utils/date';
 import { downloadTextFile } from '@/utils/download';
+import { recordBackupExported } from '@/lib/backupTracking';
 import type { WeddingOSBackup } from '@/types';
 
 export function DataManagement() {
@@ -179,6 +180,7 @@ export function DataManagement() {
   const handleExportJSON = () => {
     const backup = exportBackup();
     downloadTextFile(backupFilename(), JSON.stringify(backup, null, 2), 'application/json');
+    recordBackupExported();
     setStatus('Backup exported.');
   };
 

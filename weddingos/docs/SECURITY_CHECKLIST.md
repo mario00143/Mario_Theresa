@@ -1,4 +1,4 @@
-# Security Checklist (Phase 7)
+# Security Checklist (Phase 7 + Phase 8)
 
 Status of each item as of the Phase 7 commit. Items marked **Verified**
 were actually exercised against a real Postgres instance during this
@@ -121,6 +121,87 @@ running against a real hosted Supabase project is the honest final step.
       covered, but the actual email round-trip was not observed in this
       environment.
 
+## Phase 8: PWA / offline / launch hardening
+
+- [x] **Service worker caching reviewed** — `vite.config.ts`'s Workbox
+      config precaches only the built app shell (`js,css,html,svg,png,
+      woff2`); no `runtimeCaching` entries are configured at all, so the
+      Supabase origin (API responses, auth tokens, signed document URLs,
+      financial payloads) is never intercepted or cached by the service
+      worker — confirmed by reading the generated `dist/sw.js` after a
+      production build.
+- [x] **Offline snapshot scope minimized.** `OfflineSnapshot`
+      (`src/types/offlineSnapshot.ts`) only contains the explicitly
+      spec'd "Critical Read-Only Offline Data" categories (run sheet,
+      emergency/vendor contacts, duties, ceremony items, manifests,
+      rooming list, VIP/elderly list, open critical issues, closeout,
+      venue details) — no payments, no full guest list, no documents.
+- [x] **Offline mutation queue is allowlist-only**, enforced at the type
+      level (`OfflineMutationEntityAction` is a closed union of exactly 5
+      entity/action pairs), not a generic `{table, payload}` bag —
+      verified with a dedicated test asserting the allowlist's exact
+      membership (`tests/offlineMutationQueue.test.ts`).
+- [x] **CSP tested** against a real page load (Playwright, response
+      headers overridden to the exact policy in `vercel.json`) across
+      the dashboard and several Wedding Day routes — zero console errors,
+      confirming self-hosted assets, Supabase `connect-src`, and inline
+      styles all still work under the strict policy.
+- [x] **Security headers present** in `vercel.json`: X-Content-Type-
+      Options, Referrer-Policy, Permissions-Policy, X-Frame-Options, CSP.
+- [x] **CSV injection protected** — every CSV export builder now routes
+      through one shared, hardened `csvEscape()` (`src/utils/csv.ts`)
+      that prefixes any cell starting with `=`, `+`, `-`, or `@` before
+      applying standard quoting; this replaced four independently
+      duplicated (and unprotected) copies found during this phase's
+      review — see `tests/csv.test.ts`.
+- [x] **Uploads sanitized** — filename stripped to a safe character set
+      and randomized before storage (`buildDocumentStoragePath`,
+      unchanged from Phase 7 but now also cross-checked against a file
+      extension allow-list, not MIME type alone — a spoofable
+      client-reported MIME type is no longer sufficient by itself).
+- [x] **Diagnostics redacted** — `DiagnosticsSection.tsx` and
+      `ProductionReadinessSection.tsx` render only: version/build
+      metadata, connectivity Pass/Fail booleans, timestamps, and counts.
+      Neither ever reads or displays `session.access_token`, the anon
+      key, or an invite token — confirmed by code review of every field
+      rendered in both files.
+- [x] **Error logs redacted** — `lib/errorLog.ts` only records
+      timestamp/version/route/category/message/mode/online-status; stack
+      traces are captured only in dev builds (`import.meta.env.DEV`),
+      never in production, to avoid leaking internal paths in an
+      exported diagnostic file.
+- [x] **Backup excludes auth/session/offline state** — asserted directly
+      in `tests/backupHardening.test.ts`: the serialized backup JSON is
+      scanned and confirmed to never contain `offlineSnapshot`,
+      `offlineMutationQueue`, `errorLog`, `access_token`,
+      `refresh_token`, or `anon_key`.
+- [x] **Signed URL TTL confirmed within the 5-15 minute recommended
+      range** — 10 minutes (`DOCUMENT_SIGNED_URL_TTL_SECONDS` in
+      `documentRepository.ts`), unchanged from Phase 7's original choice,
+      now with an explicit named constant instead of a bare literal.
+- [x] **Open-redirect / auth-redirect handling reviewed.** Every
+      post-login `redirectTo` value is constructed entirely from
+      first-party app code (`navigate('/join'+location.search)` style),
+      never taken verbatim from a raw URL query string, and is passed to
+      React Router's `navigate()` — which only ever performs client-side
+      SPA routing, never a `window.location.href` assignment — so even a
+      contrived `redirectTo` value cannot cause a real browser redirect
+      off-site.
+- [x] **No `dangerouslySetInnerHTML` anywhere in the codebase** —
+      confirmed by a full-repo search; nothing renders raw HTML from
+      user-entered notes/free-text fields.
+- [ ] **Pending live environment**: sections 18-22's hosted-Supabase-
+      specific checks (migrations applied against a real project, RLS
+      re-verified against a live database, storage bucket policies live,
+      Realtime scope live, auth email round-trips live) could not be run
+      for the same reason noted in the Phase 7 section above — no live
+      Supabase project credentials were available in this build
+      environment. All corresponding code is implemented and was
+      validated against a local Postgres instance using the same
+      methodology as Phase 7 (see `supabase/tests/rls_security_tests.sql`);
+      that is a real check, but it is not a substitute for hosted
+      verification, and this checklist does not claim it is.
+
 ## Known gaps (honest, not fixed)
 
 - Workspace deletion is intentionally **not implemented** in the UI (no
@@ -139,3 +220,11 @@ running against a real hosted Supabase project is the honest final step.
   security gap: RLS is authoritative in every case, so a role that
   shouldn't be able to write something cannot actually write it even
   through a control this phase didn't get to hiding.
+- Store hydration (`hydrateSyncedStore` in `lib/supabaseSync.ts`) uses
+  `select('*')` per collection rather than an explicit column list.
+  Reviewed and accepted: every request is already filtered by
+  `workspace_id` (not unfiltered), issued once per collection in
+  parallel at bootstrap (not per-row, not N+1), and these are narrow
+  domain tables, not wide blob columns — rewriting all ~52 call sites to
+  explicit column lists was judged higher risk (a missed column silently
+  breaking a feature) than benefit at this app's scale.

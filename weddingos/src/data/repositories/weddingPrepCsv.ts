@@ -16,14 +16,7 @@ import type {
 import type { WeddingPrepIssue } from '@/utils/weddingPrepDataQuality';
 import type { SectionReadiness } from '@/utils/weddingPrepReadiness';
 import { isAttireReady } from '@/utils/attireLogic';
-
-function csvEscape(value: string | number | undefined | null): string {
-  const str = value === undefined || value === null ? '' : String(value);
-  if (/[",\n]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+import { csvEscape } from '@/utils/csv';
 
 export function churchRequirementsToCSV(requirements: ChurchRequirement[]): string {
   const headers = ['Title', 'Category', 'Applicability', 'Owner', 'Due Date', 'Status', 'Document Required', 'Document Name', 'Submitted Date', 'Verified Date', 'Verified By', 'Notes'];

@@ -8,7 +8,7 @@ function nonNegative(value: string): number {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-const FIELDS: { key: keyof Omit<WeddingDaySettings, 'weddingDayModeEnabled' | 'simulationDateTimeISO'>; label: string; hint: string }[] = [
+const FIELDS: { key: keyof Omit<WeddingDaySettings, 'weddingDayModeEnabled' | 'simulationDateTimeISO' | 'productionLaunchReview'>; label: string; hint: string }[] = [
   { key: 'commandCenterVisibilityDays', label: 'Command Center visibility (days before wedding)', hint: 'The Wedding Day Snapshot appears on the Dashboard within this many days of the wedding.' },
   { key: 'criticalIssueEscalationMinutes', label: 'Critical issue escalation (minutes)', hint: 'Warn when a Critical issue has been open longer than this.' },
   { key: 'highIssueEscalationMinutes', label: 'High issue escalation (minutes)', hint: 'Warn when a High issue has been open longer than this.' },

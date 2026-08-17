@@ -11,6 +11,7 @@ import { EmergencyView } from '@/features/weddingday/EmergencyView';
 import { CloseoutView } from '@/features/weddingday/CloseoutView';
 import { CommandSheetView } from '@/features/weddingday/CommandSheetView';
 import { OfflinePackView } from '@/features/weddingday/OfflinePackView';
+import { DeviceReadinessView } from '@/features/weddingday/DeviceReadinessView';
 import { useWeddingDayRealtime } from '@/hooks/useWeddingDayRealtime';
 
 export function WeddingDayPage() {
@@ -31,6 +32,9 @@ export function WeddingDayPage() {
           <Link to="/wedding-day/offline-pack" className="rounded-lg border border-line px-3 py-1.5 text-ink-soft hover:bg-surface-subtle">
             Offline Pack
           </Link>
+          <Link to="/wedding-day/device-readiness" className="rounded-lg border border-line px-3 py-1.5 text-ink-soft hover:bg-surface-subtle">
+            Device Readiness
+          </Link>
         </div>
       </div>
       <div className="no-print">
@@ -48,6 +52,7 @@ export function WeddingDayPage() {
         <Route path="closeout" element={<CloseoutView />} />
         <Route path="command-sheet" element={<CommandSheetView />} />
         <Route path="offline-pack" element={<OfflinePackView />} />
+        <Route path="device-readiness" element={<DeviceReadinessView />} />
       </Routes>
     </div>
   );

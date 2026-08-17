@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import type { Guest, Household } from '@/types';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { RsvpStatusBadge } from './GuestBadges';
 import { useUI } from '@/context/UIContext';
 import { useGuests } from '@/hooks/useGuests';
 import { getGuestRsvpStatus } from '@/utils/rsvpLogic';
+import { usePagedList } from '@/hooks/usePagedList';
 
 interface GuestListViewProps {
   guests: Guest[];
@@ -20,7 +22,8 @@ export function GuestListView({ guests, households, emptyTitle = 'No guests foun
   const { openGuestDetail } = useUI();
   const { deleteGuest } = useGuests();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const householdById = new Map(households.map((h) => [h.id, h]));
+  const householdById = useMemo(() => new Map(households.map((h) => [h.id, h])), [households]);
+  const { visible: pagedGuests, hasMore, loadMore, remaining } = usePagedList(guests);
 
   if (guests.length === 0) {
     return <EmptyState title={emptyTitle} description={emptyDescription} />;
@@ -47,7 +50,7 @@ export function GuestListView({ guests, households, emptyTitle = 'No guests foun
             </tr>
           </thead>
           <tbody>
-            {guests.map((guest) => {
+            {pagedGuests.map((guest) => {
               const household = householdById.get(guest.householdId);
               return (
                 <tr
@@ -91,7 +94,7 @@ export function GuestListView({ guests, households, emptyTitle = 'No guests foun
       </div>
 
       <ul className="sm:hidden space-y-2.5">
-        {guests.map((guest) => {
+        {pagedGuests.map((guest) => {
           const household = householdById.get(guest.householdId);
           return (
             <li key={guest.id}>
@@ -123,6 +126,14 @@ export function GuestListView({ guests, households, emptyTitle = 'No guests foun
           );
         })}
       </ul>
+
+      {hasMore && (
+        <div className="flex justify-center py-3">
+          <Button variant="secondary" size="sm" onClick={loadMore}>
+            Load more ({remaining} remaining)
+          </Button>
+        </div>
+      )}
 
       <ConfirmDialog
         open={confirmDeleteId !== null}

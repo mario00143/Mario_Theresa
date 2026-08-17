@@ -34,6 +34,15 @@ export const ALLOWED_DOCUMENT_MIME_TYPES = [
   'text/plain',
 ] as const;
 
+/**
+ * Section 37's belt-and-suspenders extension check — a browser-reported
+ * `file.type` can be spoofed or simply wrong (some OS/browser
+ * combinations report an empty or generic MIME for a renamed file), so
+ * the upload is rejected unless BOTH the MIME type and the file's
+ * extension are on their respective allow-lists, not just one.
+ */
+export const ALLOWED_DOCUMENT_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'docx', 'xlsx', 'txt'] as const;
+
 /** Default per-file size limit — configurable via WeddingDaySettings-style app settings, not hardcoded elsewhere. */
 export const DEFAULT_MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024;
 

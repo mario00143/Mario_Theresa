@@ -22,12 +22,17 @@ import {
 } from '@/utils/ceremonyItemMovementLogic';
 import { ceremonyItemMovementsCsvFilename, ceremonyItemMovementsToCSV } from '@/data/repositories/weddingDayCsv';
 import { downloadTextFile } from '@/utils/download';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useAuth } from '@/context/AuthContext';
+import { enqueueOfflineMutation } from '@/data/offline/offlineMutationQueue';
 
 function ItemRow({ itemId }: { itemId: string }) {
   const { settings } = useSettings();
   const { ceremonyItems } = useCeremonyItems();
   const { addCeremonyItemMovement } = useCeremonyItemMovements();
   const movements = useCeremonyItemMovementsForItem(itemId);
+  const isOnline = useOnlineStatus();
+  const { supabaseEnabled } = useAuth();
   const [recording, setRecording] = useState(false);
   const [action, setAction] = useState<CeremonyItemMovementAction>('Checked Out');
   const [toLocation, setToLocation] = useState('');
@@ -49,15 +54,30 @@ function ItemRow({ itemId }: { itemId: string }) {
 
   function handleRecord() {
     const current = lastMovement(itemId, movements);
-    addCeremonyItemMovement({
-      ceremonyItemId: itemId,
-      action,
-      timestamp: referenceISO,
-      fromLocation: current?.toLocation,
-      toLocation: toLocation || undefined,
-      handedBy: handedBy || undefined,
-      receivedBy: receivedBy || undefined,
-    });
+    if (supabaseEnabled && !isOnline) {
+      void enqueueOfflineMutation({
+        entityType: 'ceremonyItemMovement',
+        action: 'create',
+        payload: {
+          ceremonyItemId: itemId,
+          movementAction: action,
+          fromLocation: current?.toLocation,
+          toLocation: toLocation || undefined,
+          handedBy: handedBy || undefined,
+          receivedBy: receivedBy || undefined,
+        },
+      });
+    } else {
+      addCeremonyItemMovement({
+        ceremonyItemId: itemId,
+        action,
+        timestamp: referenceISO,
+        fromLocation: current?.toLocation,
+        toLocation: toLocation || undefined,
+        handedBy: handedBy || undefined,
+        receivedBy: receivedBy || undefined,
+      });
+    }
     setToLocation('');
     setHandedBy('');
     setReceivedBy('');

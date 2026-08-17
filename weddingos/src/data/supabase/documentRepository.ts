@@ -1,5 +1,5 @@
 import type { DocumentCategory, DocumentRecord, DocumentRelatedEntityType } from '@/types';
-import { ALLOWED_DOCUMENT_MIME_TYPES, DEFAULT_MAX_DOCUMENT_SIZE_BYTES } from '@/types';
+import { ALLOWED_DOCUMENT_EXTENSIONS, ALLOWED_DOCUMENT_MIME_TYPES, DEFAULT_MAX_DOCUMENT_SIZE_BYTES } from '@/types';
 import { getSupabaseClient } from '@/lib/supabase/client';
 import { getRuntimeSession } from '@/lib/runtimeSession';
 import { genericFromRow } from '@/data/adapters/genericMapper';
@@ -25,10 +25,14 @@ export interface DocumentValidationError {
   message: string;
 }
 
-/** Client-side pre-check only — the storage bucket's own file_size_limit/allowed_mime_types (section 39) is what's actually authoritative. */
+/** Client-side pre-check only — the storage bucket's own file_size_limit/allowed_mime_types (section 39) is what's actually authoritative. Checks MIME type AND file extension (not just one) since a browser-reported MIME type can be spoofed or wrong. */
 export function validateDocumentFile(file: File): DocumentValidationError | null {
   if (!(ALLOWED_DOCUMENT_MIME_TYPES as readonly string[]).includes(file.type)) {
     return { reason: 'type', message: `"${file.type || 'unknown'}" files are not allowed. Allowed: PDF, JPG, PNG, DOCX, XLSX, TXT.` };
+  }
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  if (!(ALLOWED_DOCUMENT_EXTENSIONS as readonly string[]).includes(extension)) {
+    return { reason: 'type', message: `File extension ".${extension || 'unknown'}" is not allowed. Allowed: PDF, JPG, PNG, DOCX, XLSX, TXT.` };
   }
   if (file.size > DEFAULT_MAX_DOCUMENT_SIZE_BYTES) {
     return { reason: 'size', message: `File is too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum is 10MB.` };
@@ -95,9 +99,11 @@ export async function listDocuments(filter?: { category?: DocumentCategory; rela
   return (data ?? []).map((row) => genericFromRow<DocumentRecord>(row as Record<string, Json>));
 }
 
-/** Signed URLs are short-lived (10 minutes) and generated on demand — no permanent public URL is ever created (section 39). */
+/** Section 39: signed URLs expire quickly (10 minutes — within the recommended 5-15 minute range), are generated on demand, are never persisted to a backup, and are never logged in audit metadata. */
+export const DOCUMENT_SIGNED_URL_TTL_SECONDS = 600;
+
 export async function getDocumentSignedUrl(storagePath: string): Promise<string> {
-  const { data, error } = await requireClient().storage.from(BUCKET).createSignedUrl(storagePath, 600);
+  const { data, error } = await requireClient().storage.from(BUCKET).createSignedUrl(storagePath, DOCUMENT_SIGNED_URL_TTL_SECONDS);
   if (error) throw error;
   return data.signedUrl;
 }
